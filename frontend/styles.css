@@ -1,0 +1,144 @@
+:root {
+	--bg: #0b1224;
+	--panel: #0f172a;
+	--accent: #6be1ff;
+	--text: #e3ecff;
+	--muted: #94a3b8;
+	--border: #1f2937;
+	--shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+	font-family: "Manrope", "Segoe UI", sans-serif;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+body {
+	margin: 0;
+	background: radial-gradient(circle at 10% 20%, #1d2a44 0%, #0b1224 55%, #050914 100%);
+	color: var(--text);
+	min-height: 100vh;
+}
+
+.page {
+	max-width: 960px;
+	margin: 0 auto;
+	padding: 48px 20px 64px;
+}
+
+.hero {
+	margin-bottom: 28px;
+}
+
+.eyebrow {
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--accent);
+	font-weight: 700;
+	margin: 0 0 8px;
+}
+
+h1 {
+	margin: 0 0 10px;
+	font-size: 32px;
+	letter-spacing: -0.02em;
+}
+
+.lede {
+	color: var(--muted);
+	max-width: 620px;
+	margin: 0;
+	line-height: 1.6;
+}
+
+.chat-card {
+	background: var(--panel);
+	border: 1px solid var(--border);
+	border-radius: 18px;
+	padding: 24px;
+	box-shadow: var(--shadow);
+}
+
+form {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+label {
+	font-weight: 600;
+}
+
+.input-row {
+	display: grid;
+	grid-template-columns: 1fr auto;
+	gap: 12px;
+}
+
+input[type="text"] {
+	width: 100%;
+	padding: 14px 16px;
+	border-radius: 12px;
+	border: 1px solid var(--border);
+	background: #0b152c;
+	color: var(--text);
+	outline: none;
+	transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+input[type="text"]:focus {
+	border-color: var(--accent);
+	box-shadow: 0 0 0 3px rgba(107, 225, 255, 0.15);
+}
+
+button {
+	padding: 14px 18px;
+	border: none;
+	border-radius: 12px;
+	background: linear-gradient(120deg, #5cd0ff, #6be1ff 45%, #4cc3f5 100%);
+	color: #031120;
+	font-weight: 700;
+	cursor: pointer;
+	transition: transform 0.15s ease, box-shadow 0.2s ease;
+	box-shadow: 0 10px 30px rgba(107, 225, 255, 0.35);
+}
+
+button:disabled {
+	opacity: 0.7;
+	cursor: not-allowed;
+	box-shadow: none;
+}
+
+button:hover:not(:disabled) {
+	transform: translateY(-1px);
+}
+
+#status {
+	margin-top: 12px;
+	color: var(--muted);
+	min-height: 22px;
+}
+
+.status.error {
+	color: #ffb4a2;
+}
+
+.answer {
+	margin-top: 18px;
+	padding: 16px;
+	border-radius: 12px;
+	background: #0b152c;
+	border: 1px solid var(--border);
+	min-height: 48px;
+	line-height: 1.6;
+}
+
+@media (max-width: 640px) {
+	.input-row {
+		grid-template-columns: 1fr;
+	}
+
+	button {
+		width: 100%;
+	}
+}
