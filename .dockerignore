@@ -1,0 +1,17 @@
+.git
+.gitignore
+.env
+.claude
+myvenv
+venv
+__pycache__
+*.pyc
+*.pyo
+.pytest_cache
+.mypy_cache
+.ruff_cache
+LICENSE
+CLAUDE.md
+README.md
+.env.example
+tests/

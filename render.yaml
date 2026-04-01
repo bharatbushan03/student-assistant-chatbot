@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: student-assistant-chatbot
+    runtime: docker
+    plan: free
+    region: oregon
+    healthCheckPath: /health
+    envVars:
+      - key: HUGGINGFACEHUB_API_TOKEN
+        sync: false
+      - key: PORT
+        value: 10000
+      - key: PROJECT_ROOT
+        value: /app
