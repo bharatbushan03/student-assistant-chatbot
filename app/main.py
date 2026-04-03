@@ -62,14 +62,21 @@ app.add_middleware(
 app.include_router(chat.router, prefix="/chat", tags=["Chat"])
 
 # ── Static files (frontend) ──────────────────────────────────────────
-app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
+# Pointing to the built React Vite app
+FRONTEND_DIR = Path(__file__).resolve().parent.parent / "miety-ai-react" / "dist"
 
+app.mount("/assets", StaticFiles(directory=str(FRONTEND_DIR / "assets")), name="assets")
 
 @app.get("/", include_in_schema=False)
 async def serve_frontend():
     """Serve the chat frontend at the root URL."""
     return FileResponse(FRONTEND_DIR / "index.html")
 
+
+@app.get("/{catchall:path}", include_in_schema=False)
+async def catch_all(catchall: str):
+    """Fallback route for SPA navigation, pointing to index.html if file not found."""
+    return FileResponse(FRONTEND_DIR / "index.html")
 
 @app.get("/health")
 async def health_check():
