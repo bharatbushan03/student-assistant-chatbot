@@ -16,17 +16,35 @@ logger = logging.getLogger("uvicorn.error")
 FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
 
 
+def _check_required_settings():
+    """Validate required environment variables at startup."""
+    from app.config.settings import get_settings
+    settings = get_settings()
+
+    missing = []
+    if not settings.pinecone_api_key:
+        missing.append("PINECONE_API_KEY")
+    if not settings.huggingface_api_token and not settings.openai_api_key:
+        missing.append("HUGGINGFACEHUB_API_TOKEN or OPENAI_API_KEY")
+
+    if missing:
+        logger.error("Missing required environment variables: %s", ", ".join(missing))
+        raise RuntimeError(f"Missing required environment variables: {', '.join(missing)}")
+
+
 @asynccontextmanager
 async def lifespan(application: FastAPI):
     """Startup / shutdown lifecycle hook."""
-    logger.info("🚀  Student Assistant Chatbot is starting up")
+    logger.info("🚀  MIETY AI is starting up")
+    _check_required_settings()
+    logger.info("✅  Configuration validated")
     yield
     logger.info("👋  Shutting down")
 
 
 app = FastAPI(
-    title="MIET Student Assistant Chatbot",
-    description="RAG-powered chatbot that answers student queries about MIET Jammu",
+    title="MIETY AI",
+    description="RAG-powered chatbot for MIET Jammu students",
     version="1.0.0",
     lifespan=lifespan,
 )

@@ -1,5 +1,5 @@
 /**
- * MIET Student Assistant — Professional Chat Application
+ * MIETY AI — Professional Chat Application
  * Enterprise-grade JavaScript with modular architecture
  * @version 2.0.0
  */
@@ -134,30 +134,47 @@ const Utils = {
     parseMarkdown(text) {
         if (!text) return '';
 
-        // Escape HTML first to prevent XSS
-        let html = this.escapeHtml(text);
+        // Configure marked options
+        marked.setOptions({
+            breaks: true,
+            gfm: true,
+            headerIds: false,
+            mangle: false
+        });
 
-        // Code blocks (```code```) - must be before inline code
-        html = html.replace(/```(\n?)([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
+        // Render markdown first, then sanitize the output
+        const html = marked.parse(text);
 
-        // Inline code (`code`)
-        html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+        // Sanitize the HTML output to prevent XSS (simple sanitization)
+        return this.sanitizeHtml(html);
+    },
 
-        // Bold (**text** or __text__)
-        html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-        html = html.replace(/__([^_]+)__/g, '<strong>$1</strong>');
+    /**
+     * Sanitize HTML to prevent XSS
+     */
+    sanitizeHtml(html) {
+        // Create a temporary element to parse HTML
+        const div = document.createElement('div');
+        div.innerHTML = html;
 
-        // Italic (*text* or _text_) - but not already processed bold
-        html = html.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
-        html = html.replace(/(?<!_)_([^_]+)_(?!_)/g, '<em>$1</em>');
+        // Remove potentially dangerous elements and attributes
+        const dangerous = ['script', 'iframe', 'object', 'embed', 'form', 'input', 'button'];
+        dangerous.forEach(tag => {
+            div.querySelectorAll(tag).forEach(el => el.remove());
+        });
 
-        // Links [text](url)
-        html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+        // Remove javascript: links and event handlers
+        div.querySelectorAll('*').forEach(el => {
+            // Remove event handlers (onclick, onerror, etc.)
+            Array.from(el.attributes).forEach(attr => {
+                if (attr.name.startsWith('on') ||
+                    (attr.name === 'href' && attr.value.startsWith('javascript:'))) {
+                    el.removeAttribute(attr.name);
+                }
+            });
+        });
 
-        // Line breaks to <br>
-        html = html.replace(/\n/g, '<br>');
-
-        return html;
+        return div.innerHTML;
     },
 
     /**
@@ -784,7 +801,7 @@ function initializeApp() {
     }
 
     // Welcome console message
-    console.log('%c🎓 MIET Student Assistant', 'font-size: 24px; font-weight: bold; color: #22d3ee;');
+    console.log('%c🎓 MIETY AI', 'font-size: 24px; font-weight: bold; color: #22d3ee;');
     console.log('%cVersion 2.0.0 - Ready', 'font-size: 14px; color: #94a3b8;');
     console.log('%cKeyboard shortcuts:\n• Cmd/Ctrl + Enter: Send message\n• Cmd/Ctrl + N: New conversation\n• Cmd/Ctrl + K: Focus input', 'font-size: 12px; color: #64748b;');
 }

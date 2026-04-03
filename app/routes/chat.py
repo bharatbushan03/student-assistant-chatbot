@@ -4,9 +4,11 @@ import asyncio
 import logging
 
 from fastapi import APIRouter, HTTPException
+from pydantic import ValidationError
 
 from app.models.request_models import AskRequest
 from app.services.rag_pipeline import answer_query
+from app.services.web_search import get_miet_basic_info, search_miet_specific, scrape_miet_page
 
 logger = logging.getLogger(__name__)
 
@@ -20,9 +22,61 @@ async def ask_question(payload: AskRequest):
         # Run blocking RAG pipeline in a thread pool to avoid blocking the event loop
         answer = await asyncio.to_thread(answer_query, payload.question, payload.history)
         return {"answer": answer}
+    except ValidationError as exc:
+        # Re-raise validation errors from Pydantic
+        raise
+    except RuntimeError as exc:
+        # LLM or retrieval errors that are already user-friendly
+        logger.error("Runtime error in /chat/ask: %s", exc)
+        raise HTTPException(
+            status_code=503,
+            detail=str(exc),
+        ) from exc
     except Exception as exc:
         logger.exception("Unhandled error in /chat/ask: %s", exc)
         raise HTTPException(
             status_code=500,
             detail="An unexpected error occurred. Please try again later.",
+        ) from exc
+
+
+@router.get("/miet-info")
+async def get_miet_info():
+    """Get basic information about MIET scraped from the official website."""
+    try:
+        info = await asyncio.to_thread(get_miet_basic_info)
+        return {"info": info}
+    except Exception as exc:
+        logger.exception("Failed to fetch MIET info: %s", exc)
+        raise HTTPException(
+            status_code=503,
+            detail="Unable to fetch information from MIET website at this time.",
+        ) from exc
+
+
+@router.get("/search")
+async def search_miet(q: str):
+    """Search MIET website for information."""
+    try:
+        result = await asyncio.to_thread(search_miet_specific, q)
+        return {"query": q, "result": result}
+    except Exception as exc:
+        logger.exception("Search failed: %s", exc)
+        raise HTTPException(
+            status_code=500,
+            detail="Search failed.",
+        ) from exc
+
+
+@router.get("/scrape-page")
+async def scrape_page(url_path: str):
+    """Scrape a specific MIET page by providing its URL path."""
+    try:
+        result = await asyncio.to_thread(scrape_miet_page, url_path)
+        return result
+    except Exception as exc:
+        logger.exception("Scrape failed: %s", exc)
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to scrape page.",
         ) from exc

@@ -29,7 +29,7 @@ def test_retrieval():
     ]
 
     print("=" * 80)
-    print("MIET CHATBOT - RETRIEVAL TEST")
+    print("MIETY AI - RETRIEVAL TEST")
     print("=" * 80)
 
     settings = get_settings()

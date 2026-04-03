@@ -6,28 +6,22 @@ from typing import List, Dict
 from app.config.settings import get_settings
 from app.services.llm import get_llm_client
 from app.services.retriever import retrieve
+from app.services.web_search import search_miet_specific
 
 logger = logging.getLogger(__name__)
 
 
-SYSTEM_PROMPT = """You are MIET Assistant, an official AI chatbot for Model Institute of Engineering and Technology (MIET) Jammu.
+SYSTEM_PROMPT = """You are MIETY AI, an AI chatbot for Model Institute of Engineering and Technology (MIET) Jammu.
 
-Your role is to help students with accurate information about MIET Jammu based on the retrieved context provided.
+CRITICAL INSTRUCTIONS:
+1. Answer ONLY the specific question asked - nothing more, nothing less.
+2. DO NOT add unrelated information, tangential details, or "helpful" extras.
+3. If context contains the answer, use it. If context does NOT have the answer, use your general knowledge about MIET Jammu and Indian engineering colleges.
+4. NEVER say "the context does not mention" or "I don't have enough information" - instead provide useful information from your knowledge.
+5. Be direct and concise - 2-4 sentences maximum unless the question requires more.
+6. DO NOT list other topics, services, or suggest alternative questions.
 
-INSTRUCTIONS:
-1. Answer ONLY based on the provided context. Do not use outside knowledge.
-2. If the context contains specific details (numbers, dates, names, eligibility criteria, fees), include them in your answer.
-3. If the context is insufficient, say "I don't have enough information about that in my knowledge base" and suggest related topics.
-4. Be concise but complete. Include relevant specifics like:
-   - Fee amounts and payment schedules
-   - Eligibility percentages and entrance exam requirements
-   - Course durations and specializations
-   - Contact numbers and email addresses
-   - Important dates and deadlines
-5. Structure your answer clearly with bullet points or numbered lists when appropriate.
-6. If the user asks about something not in the context, acknowledge this limitation honestly.
-
-Remember: The user is a student or parent seeking information about MIET Jammu. Be helpful, professional, and accurate."""
+Answer the question directly. No introductions, no conclusions, no suggestions."""
 
 
 def format_context(chunks: List[str]) -> str:
@@ -66,29 +60,77 @@ def answer_query(query: str, history: List[Dict[str, str]] = None) -> str:
         return "I'm having trouble accessing the knowledge base right now. Please try again in a moment."
 
     if not chunks:
-        return """I couldn't find specific information about that in my knowledge base.
+        # No context found - try web search first, then fall back to LLM
+        logger.info("No context found, searching web for: %s", query)
 
-I can help you with questions about:
-• Admissions and eligibility criteria
-• Fee structure for various courses
-• B.Tech, M.Tech, MBA, BBA, BCA, MCA, and other programs
-• Placements and training programs
-• Campus facilities and student life
+        web_context = search_miet_specific(query)
 
-Could you try rephrasing your question or ask about one of these topics?"""
+        if web_context:
+            logger.info("Web search found information, using it for response")
+            user_prompt = f"""Web search results about MIET:
+{web_context}
+
+Question: {query}
+
+Answer based on the search results above. Be direct and concise - 2-4 sentences max."""
+        else:
+            logger.info("Web search returned no results, using LLM knowledge")
+            user_prompt = f"Question: {query}\n\nAnswer based on your knowledge about MIET Jammu. Be direct and concise."
+
+        messages = [
+            {
+                "role": "system",
+                "content": """You are MIETY AI, an AI chatbot for MIET Jammu.
+Answer questions accurately and concisely. 2-4 sentences max. No introductions or suggestions."""
+            },
+            {
+                "role": "user",
+                "content": user_prompt
+            }
+        ]
+
+        try:
+            response = get_llm_client().generate(messages, max_tokens=400)
+            return response.strip()
+        except Exception as exc:
+            logger.error("LLM generation failed for no-context query: %s", exc)
+            return "I couldn't find specific information. Please check MIET's official website."
 
     # Format the context
     context_text = format_context(chunks)
 
-    # Build the user prompt with context
-    user_prompt = f"""Based on the following information from MIET Jammu's official sources, please answer the question.
+    # Check if context seems relevant to the query (simple heuristic)
+    context_lower = context_text.lower()
+    query_lower = query.lower()
 
-RETRIEVED INFORMATION:
+    # Check if key query terms appear in context
+    key_terms = [word for word in query_lower.split() if len(word) > 3 and word not in ['what', 'which', 'where', 'about', 'tell', 'please', 'current', 'specific']]
+    context_has_key_terms = any(term in context_lower for term in key_terms)
+
+    # For queries about people/directorship, always try web search for most current info
+    needs_current_info = any(kw in query_lower for kw in ['director', 'principal', 'chairperson', 'head', 'chief', 'president', 'who is'])
+
+    # If context doesn't seem relevant OR query needs current info, try web search
+    if not context_has_key_terms or needs_current_info:
+        logger.info("Context may not be relevant or needs current info, trying web search for: %s", query)
+        web_context = search_miet_specific(query)
+        if web_context:
+            logger.info("Using web search results")
+            context_text = web_context
+
+    # Build the user prompt with context
+    user_prompt = f"""Context from MIET sources:
 {context_text}
 
-USER QUESTION: {query}
+Question: {query}
 
-Please provide a complete and accurate answer based on the information above."""
+Instructions:
+1. If the context contains the answer, use it to provide a specific, detailed response.
+2. If the context does NOT contain the answer, use your general knowledge about MIET Jammu and Indian engineering colleges.
+3. Be direct and concise - 2-4 sentences max.
+4. Never say "the context does not mention" - provide useful information.
+
+Answer the question directly."""
 
     # Construct the message array
     messages = [

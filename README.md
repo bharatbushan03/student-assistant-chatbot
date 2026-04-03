@@ -1,4 +1,4 @@
-# MIET Student Assistant Chatbot
+# MIETY AI
 
 A **RAG-powered chatbot** for MIET Jammu students. Ask about admissions, courses, fees, placements, campus life, and more.
 

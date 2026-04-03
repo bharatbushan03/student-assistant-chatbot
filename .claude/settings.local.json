@@ -7,7 +7,10 @@
       "Bash(python -m py_compile app/services/rag_pipeline.py ingestion/langchain_web_loader.py)",
       "Bash(python:*)",
       "Bash(find . -type f -name *.py -o -name *.json -o -name *.md -o -name *.txt -o -name *.yaml -o -name *.yml -o -name .env*)",
-      "Bash(find . -name *frontend-changes* -o -name *frontend_changes*)"
+      "Bash(find . -name *frontend-changes* -o -name *frontend_changes*)",
+      "Bash(find .:*)",
+      "Bash(pip install:*)",
+      "WebSearch"
     ]
   }
 }
