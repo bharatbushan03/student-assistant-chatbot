@@ -106,7 +106,7 @@ def verify_storage():
 def main():
     """Main rebuild process."""
     print("="*60)
-    print("MIETY AI - KNOWLEDGE BASE REBUILD")
+    print("MIET KNOWLEDGE BASE REBUILD")
     print("="*60)
     print("\nThis will rebuild the entire knowledge base from scratch.")
     print("It may take several minutes depending on your connection.\n")

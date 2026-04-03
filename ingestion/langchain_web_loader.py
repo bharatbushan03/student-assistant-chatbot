@@ -70,6 +70,7 @@ urls = [
     "https://mietjmu.in/research-development-cell/innovation-entrepreneurship-research/",
     "https://mietjmu.in/centres-of-excellence/",
     "https://mietjmu.in/icngcis/",
+    "https://mietjmu.in/downloads/brochure_2025.pdf",
     "https://mietjmu.in/news/",
     "https://mietjmu.in/cbc-eclerx-miet-jammu/",
     "https://mietjmu.in/miet-jammu-placement-coding-ninjas-bba-bfsi/",
@@ -140,18 +141,21 @@ def main():
             logger.info("[%d/%d] Loading: %s", i, len(urls), url)
 
             # Configure loader with better extraction
-            headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-                "Accept-Language": "en-US,en;q=0.5",
-            }
             loader = WebBaseLoader(
                 url,
                 verify_ssl=True,
-                continue_on_failure=True,
-                header=headers,
-                timeout=30,
+                continue_on_failure=True
             )
+
+            # Set headers to mimic browser
+            loader.requests_kwargs = {
+                "headers": {
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                    "Accept-Language": "en-US,en;q=0.5",
+                },
+                "timeout": 30
+            }
 
             docs = loader.load()
 
