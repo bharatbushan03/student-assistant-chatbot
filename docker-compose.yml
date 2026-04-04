@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  # Node.js Auth Backend (port 5000)
+  auth-backend:
+    build:
+      context: ./backend-auth
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - MONGODB_URI=${MONGODB_URI}
+      - JWT_SECRET=${JWT_SECRET}
+    depends_on:
+      - mongo
+    networks:
+      - miety-network
+
+  # MongoDB (for auth backend)
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - miety-network
+
+  # FastAPI Chat Backend (port 10000)
+  chat-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "10000:10000"
+    environment:
+      - PORT=10000
+      - HUGGINGFACEHUB_API_TOKEN=${HUGGINGFACEHUB_API_TOKEN}
+      - PINECONE_API_KEY=${PINECONE_API_KEY}
+      - PINECONE_INDEX_NAME=${PINECONE_INDEX_NAME:-miet-assistant-chatbot}
+      - PINECONE_CLOUD=${PINECONE_CLOUD:-aws}
+      - PINECONE_REGION=${PINECONE_REGION:-us-east-1}
+      - JWT_SECRET=${JWT_SECRET}
+    depends_on:
+      - auth-backend
+    networks:
+      - miety-network
+
+  # React Frontend with Nginx (port 80)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - chat-backend
+      - auth-backend
+    networks:
+      - miety-network
+
+networks:
+  miety-network:
+    driver: bridge
+
+volumes:
+  mongo-data:

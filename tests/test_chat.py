@@ -8,26 +8,53 @@ from app.main import app
 
 client = TestClient(app)
 
+# Mock user for testing
+MOCK_USER = {"id": "test-user", "email": "test@mietjammu.in"}
+
+
+def override_get_current_user():
+    """Override dependency to return mock user."""
+    return MOCK_USER
+
 
 def test_ask_question_returns_answer():
     """Mock the RAG pipeline and verify the endpoint returns an answer."""
-    with patch("app.routes.chat.answer_query", return_value="test-answer"):
-        response = client.post("/chat/ask", json={"question": "Hello there?"})
+    # Override auth dependency
+    from app.routes.chat import get_current_user
+    app.dependency_overrides[get_current_user] = override_get_current_user
 
-    assert response.status_code == 200
-    assert response.json()["answer"] == "test-answer"
+    try:
+        with patch("app.routes.chat.answer_query", return_value="test-answer"):
+            response = client.post("/chat/ask", json={"question": "Hello there?"})
+
+        assert response.status_code == 200
+        assert response.json()["answer"] == "test-answer"
+    finally:
+        app.dependency_overrides.clear()
 
 
 def test_ask_question_requires_payload():
     """Sending an empty body should return 422."""
-    response = client.post("/chat/ask", json={})
-    assert response.status_code == 422
+    from app.routes.chat import get_current_user
+    app.dependency_overrides[get_current_user] = override_get_current_user
+
+    try:
+        response = client.post("/chat/ask", json={})
+        assert response.status_code == 422
+    finally:
+        app.dependency_overrides.clear()
 
 
 def test_ask_question_minimum_length():
     """Question shorter than 3 chars should be rejected."""
-    response = client.post("/chat/ask", json={"question": "Hi"})
-    assert response.status_code == 422
+    from app.routes.chat import get_current_user
+    app.dependency_overrides[get_current_user] = override_get_current_user
+
+    try:
+        response = client.post("/chat/ask", json={"question": "Hi"})
+        assert response.status_code == 422
+    finally:
+        app.dependency_overrides.clear()
 
 
 def test_health_check():

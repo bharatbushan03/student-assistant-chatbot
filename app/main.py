@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.routes import chat
+from app.routes import chat, auth
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -58,14 +58,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ── Health check (before catch-all) ──────────────────────────────────
+@app.get("/health", include_in_schema=False)
+async def health_check():
+    """Simple health check for Render / uptime monitors."""
+    return {"status": "ok"}
+
 # ── API routes ────────────────────────────────────────────────────────
 app.include_router(chat.router, prefix="/chat", tags=["Chat"])
+app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
 
 # ── Static files (frontend) ──────────────────────────────────────────
 # Pointing to the built React Vite app
-FRONTEND_DIR = Path(__file__).resolve().parent.parent / "miety-ai-react" / "dist"
+FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend" / "dist"
 
 app.mount("/assets", StaticFiles(directory=str(FRONTEND_DIR / "assets")), name="assets")
+app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
 
 @app.get("/", include_in_schema=False)
 async def serve_frontend():
@@ -77,8 +85,3 @@ async def serve_frontend():
 async def catch_all(catchall: str):
     """Fallback route for SPA navigation, pointing to index.html if file not found."""
     return FileResponse(FRONTEND_DIR / "index.html")
-
-@app.get("/health")
-async def health_check():
-    """Simple health check for Render / uptime monitors."""
-    return {"status": "ok"}

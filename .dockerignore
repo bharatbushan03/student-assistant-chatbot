@@ -1,17 +1,56 @@
+# Git
 .git
 .gitignore
-.env
-.claude
-myvenv
-venv
+
+# Python
 __pycache__
-*.pyc
-*.pyo
-.pytest_cache
-.mypy_cache
-.ruff_cache
-LICENSE
-CLAUDE.md
-README.md
-.env.example
+*.py[cod]
+*$py.class
+*.so
+.Python
+.env
+.venv
+env/
+venv/
+ENV/
+.pytest_cache/
+*.egg-info/
+requirements-dev.txt
+
+# Node
+node_modules
+npm-debug.log
+yarn-error.log
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.claude
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Build artifacts
+dist/
+build/
+*.log
+
+# Data
+data/
+
+# Tests
 tests/
+
+# Docs
+*.md
+!README.md
+docs/
+
+# Misc
+.DS_Store
+Thumbs.db

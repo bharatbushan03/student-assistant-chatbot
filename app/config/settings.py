@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     openai_api_key: str | None = Field(default=None, alias="OPENAI_API_KEY")
     huggingface_api_token: str | None = Field(default=None, alias="HUGGINGFACEHUB_API_TOKEN")
     pinecone_api_key: str | None = Field(default=None, alias="PINECONE_API_KEY")
+    jwt_secret: str = Field(default="your_super_secret_jwt_key_here", alias="JWT_SECRET")
 
     # Model configuration
     openai_model: str = "gpt-3.5-turbo"

@@ -9,6 +9,8 @@ from pydantic import ValidationError
 from app.models.request_models import AskRequest
 from app.services.rag_pipeline import answer_query
 from app.services.web_search import get_miet_basic_info, search_miet_specific, scrape_miet_page
+from app.utils.auth import get_current_user
+from fastapi import Depends
 
 logger = logging.getLogger(__name__)
 
@@ -16,8 +18,8 @@ router = APIRouter()
 
 
 @router.post("/ask")
-async def ask_question(payload: AskRequest):
-    """Receive student question and return chatbot answer."""
+async def ask_question(payload: AskRequest, current_user: dict = Depends(get_current_user)):
+    """Receive student question and return chatbot answer. Required valid JWT token."""
     try:
         # Run blocking RAG pipeline in a thread pool to avoid blocking the event loop
         answer = await asyncio.to_thread(answer_query, payload.question, payload.history)

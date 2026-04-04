@@ -1,0 +1,14 @@
+node_modules
+build
+dist
+npm-debug.log
+.git
+.gitignore
+.env
+.dockerignore
+Dockerfile
+nginx.conf
+.vscode
+.idea
+*.swp
+*.swo

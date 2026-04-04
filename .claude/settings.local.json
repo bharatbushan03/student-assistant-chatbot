@@ -10,7 +10,30 @@
       "Bash(find . -name *frontend-changes* -o -name *frontend_changes*)",
       "Bash(find .:*)",
       "Bash(pip install:*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(npm run:*)",
+      "Bash(netstat -ano)",
+      "Bash(findstr :10000)",
+      "Bash(findstr :5000)",
+      "Bash(curl:*)",
+      "Bash(tasklist)",
+      "Bash(findstr \"python\")",
+      "Bash(taskkill:*)",
+      "Bash(Get-Process -Id 13764)",
+      "Bash(Stop-Process -Force)",
+      "Bash(kill -9 13764)",
+      "Bash(ls -la *.txt)",
+      "Bash(dir:*)",
+      "Bash(findstr \":10000\")",
+      "Bash(timeout 5)",
+      "Bash(node -e ':*)",
+      "Bash(npm start:*)",
+      "Bash(npm list:*)",
+      "Bash(ls -la .env*)",
+      "Bash(Get-Process python:*)",
+      "Bash(pkill -f uvicorn)",
+      "Bash(powershell:*)",
+      "Bash(git add:*)"
     ]
   }
 }

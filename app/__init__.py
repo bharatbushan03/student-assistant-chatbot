@@ -1,1 +1,1 @@
-# app package
+# MIETY AI Application Package
