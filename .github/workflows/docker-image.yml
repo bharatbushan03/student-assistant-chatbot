@@ -1,0 +1,126 @@
+name: Build and Push Docker Images
+
+  on:
+    push:
+      branches: [main, master]
+    pull_request:
+      branches: [main, master]
+
+  env:
+    REGISTRY: ghcr.io
+    IMAGE_PREFIX: ${{ github.repository_owner }}
+
+  jobs:
+    # Build Auth Backend (Node.js)
+    build-auth-backend:
+      runs-on: ubuntu-latest
+      permissions:
+        contents: read
+        packages: write
+
+      steps:
+        - name: Checkout repository
+          uses: actions/checkout@v4
+
+        - name: Log in to Container Registry
+          uses: docker/login-action@v3
+          with:
+            registry: ${{ env.REGISTRY }}
+            username: ${{ github.actor }}
+            password: ${{ secrets.GITHUB_TOKEN }}
+
+        - name: Extract metadata for Auth Backend
+          id: meta-auth
+          uses: docker/metadata-action@v5
+          with:
+            images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/miety-auth-backend
+            tags: |
+              type=ref,event=branch
+              type=ref,event=pr
+              type=sha,prefix=
+              type=semver,pattern={{version}}
+
+        - name: Build and push Auth Backend
+          uses: docker/build-push-action@v5
+          with:
+            context: ./backend-auth
+            file: ./backend-auth/Dockerfile
+            push: true
+            tags: ${{ steps.meta-auth.outputs.tags }}
+            labels: ${{ steps.meta-auth.outputs.labels }}
+
+    # Build Chat Backend (FastAPI)
+    build-chat-backend:
+      runs-on: ubuntu-latest
+      permissions:
+        contents: read
+        packages: write
+
+      steps:
+        - name: Checkout repository
+          uses: actions/checkout@v4
+
+        - name: Log in to Container Registry
+          uses: docker/login-action@v3
+          with:
+            registry: ${{ env.REGISTRY }}
+            username: ${{ github.actor }}
+            password: ${{ secrets.GITHUB_TOKEN }}
+
+        - name: Extract metadata for Chat Backend
+          id: meta-chat
+          uses: docker/metadata-action@v5
+          with:
+            images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/miety-chat-backend
+            tags: |
+              type=ref,event=branch
+              type=ref,event=pr
+              type=sha,prefix=
+              type=semver,pattern={{version}}
+
+        - name: Build and push Chat Backend
+          uses: docker/build-push-action@v5
+          with:
+            context: .
+            file: ./Dockerfile
+            push: true
+            tags: ${{ steps.meta-chat.outputs.tags }}
+            labels: ${{ steps.meta-chat.outputs.labels }}
+
+    # Build Frontend (React + Nginx)
+    build-frontend:
+      runs-on: ubuntu-latest
+      permissions:
+        contents: read
+        packages: write
+
+      steps:
+        - name: Checkout repository
+          uses: actions/checkout@v4
+
+        - name: Log in to Container Registry
+          uses: docker/login-action@v3
+          with:
+            registry: ${{ env.REGISTRY }}
+            username: ${{ github.actor }}
+            password: ${{ secrets.GITHUB_TOKEN }}
+
+        - name: Extract metadata for Frontend
+          id: meta-frontend
+          uses: docker/metadata-action@v5
+          with:
+            images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/miety-frontend
+            tags: |
+              type=ref,event=branch
+              type=ref,event=pr
+              type=sha,prefix=
+              type=semver,pattern={{version}}
+
+        - name: Build and push Frontend
+          uses: docker/build-push-action@v5
+          with:
+            context: ./frontend
+            file: ./frontend/Dockerfile
+            push: true
+            tags: ${{ steps.meta-frontend.outputs.tags }}
+            labels: ${{ steps.meta-frontend.outputs.labels }}
