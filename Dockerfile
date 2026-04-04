@@ -1,4 +1,12 @@
 # FastAPI Chat Backend Dockerfile
+FROM node:20-slim AS frontend-builder
+
+WORKDIR /frontend
+COPY frontend/package*.json ./
+RUN npm install
+COPY frontend/ ./
+RUN npm run build
+
 FROM python:3.11-slim
 
 # Prevent .pyc files and enable unbuffered output
@@ -20,8 +28,9 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Copy backend files
 COPY app/ ./app/
 COPY run.py ./
-COPY ingestion/ ./ingestion/ 2>/dev/null || true
-COPY data/ ./data/ 2>/dev/null || true
+COPY ingestion/ ./ingestion/
+RUN mkdir -p ./data
+COPY --from=frontend-builder /frontend/dist ./frontend/dist
 
 # Expose port
 EXPOSE 10000
