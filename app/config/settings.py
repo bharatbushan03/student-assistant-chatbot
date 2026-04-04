@@ -36,6 +36,10 @@ class Settings(BaseSettings):
     # Server
     port: int = Field(default=10000, alias="PORT")
 
+    # MongoDB
+    mongodb_uri: str = Field(default="mongodb://localhost:27017", alias="MONGODB_URI")
+    mongodb_database: str = Field(default="miety_ai", alias="MONGODB_DATABASE")
+
     model_config = SettingsConfigDict(
         env_file=str(PROJECT_ROOT / ".env"),
         extra="ignore",

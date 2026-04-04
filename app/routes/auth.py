@@ -4,21 +4,19 @@ import logging
 import jwt
 import bcrypt
 from datetime import datetime, timedelta
-from typing import Optional, Dict, Any
-import os
+from typing import Optional, Any
+from bson import ObjectId
 
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, EmailStr, Field
 
 from app.config.settings import get_settings
 from app.utils.auth import get_current_user
+from app.db.mongodb import get_users_collection
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
-
-# In-memory user storage (replace with database in production)
-USERS_DB: Dict[str, dict] = {}
 
 
 def hash_password(password: str) -> str:
@@ -33,12 +31,6 @@ def verify_password(password: str, hashed_password: str) -> bool:
     try:
         return bcrypt.checkpw(password.encode(), hashed_password.encode())
     except Exception:
-        # Handle case where existing hash might be from old SHA256 method
-        import hashlib
-        sha256_hash = hashlib.sha256(password.encode()).hexdigest()
-        if sha256_hash == hashed_password:
-            logger.warning("User authenticated with deprecated SHA256 hash")
-            return True
         return False
 
 
@@ -93,26 +85,30 @@ async def signup(request: SignupRequest):
             detail="Registration is strictly restricted to @mietjammu.in domains."
         )
 
+    users = get_users_collection()
+
     # Check if user already exists
-    if email in USERS_DB:
+    existing_user = await users.find_one({"email": email})
+    if existing_user:
         raise HTTPException(
             status_code=400,
             detail="An account with this email already exists."
         )
 
     # Create new user
-    user_id = str(hash(email) % 1000000)
-    USERS_DB[email] = {
-        "id": user_id,
+    user_data = {
         "email": email,
         "password": hash_password(request.password),
-        "created_at": datetime.utcnow().isoformat(),
+        "created_at": datetime.utcnow(),
         "name": None,
         "college_id": None,
         "section": None,
         "semester": None,
         "profile_picture": None
     }
+
+    result = await users.insert_one(user_data)
+    user_id = str(result.inserted_id)
 
     token = create_token(user_id, email)
 
@@ -136,26 +132,21 @@ async def login(request: LoginRequest):
     """Authenticate user and return JWT token."""
     email = request.email.lower()
 
-    if email not in USERS_DB:
+    users = get_users_collection()
+    user = await users.find_one({"email": email})
+
+    if not user or not verify_password(request.password, user["password"]):
         raise HTTPException(
             status_code=401,
             detail="Invalid credentials."
         )
 
-    user = USERS_DB[email]
-
-    if not verify_password(request.password, user["password"]):
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid credentials."
-        )
-
-    token = create_token(user["id"], email)
+    token = create_token(str(user["_id"]), email)
 
     return {
         "success": True,
         "user": {
-            "id": user["id"],
+            "id": str(user["_id"]),
             "email": user["email"],
             "name": user.get("name"),
             "college_id": user.get("college_id"),
@@ -172,18 +163,19 @@ async def get_profile(current_user: dict = Depends(get_current_user)):
     """Get current user profile."""
     email = current_user.get("email")
 
-    if email not in USERS_DB:
+    users = get_users_collection()
+    user = await users.find_one({"email": email})
+
+    if not user:
         raise HTTPException(
             status_code=404,
             detail="User not found."
         )
 
-    user = USERS_DB[email]
-
     return {
         "success": True,
         "user": {
-            "id": user["id"],
+            "id": str(user["_id"]),
             "email": user["email"],
             "name": user.get("name"),
             "college_id": user.get("college_id"),
@@ -202,35 +194,72 @@ async def update_profile(
     """Update current user profile."""
     email = current_user.get("email")
 
-    if email not in USERS_DB:
+    users = get_users_collection()
+    user = await users.find_one({"email": email})
+
+    if not user:
         raise HTTPException(
             status_code=404,
             detail="User not found."
         )
 
-    user = USERS_DB[email]
-
-    # Update fields
+    # Build update dict with only provided fields
+    update_data = {}
     if profile_data.name is not None:
-        user["name"] = profile_data.name
+        update_data["name"] = profile_data.name
     if profile_data.college_id is not None:
-        user["college_id"] = profile_data.college_id
+        update_data["college_id"] = profile_data.college_id
     if profile_data.section is not None:
-        user["section"] = profile_data.section
+        update_data["section"] = profile_data.section
     if profile_data.semester is not None:
-        user["semester"] = profile_data.semester
+        update_data["semester"] = profile_data.semester
     if profile_data.profile_picture is not None:
-        user["profile_picture"] = profile_data.profile_picture
+        update_data["profile_picture"] = profile_data.profile_picture
+
+    if update_data:
+        await users.update_one({"email": email}, {"$set": update_data})
+
+    # Fetch updated user
+    updated_user = await users.find_one({"email": email})
 
     return {
         "success": True,
         "user": {
-            "id": user["id"],
+            "id": str(updated_user["_id"]),
+            "email": updated_user["email"],
+            "name": updated_user.get("name"),
+            "college_id": updated_user.get("college_id"),
+            "section": updated_user.get("section"),
+            "semester": updated_user.get("semester"),
+            "profile_picture": updated_user.get("profile_picture")
+        }
+    }
+
+
+@router.get("/users")
+async def list_all_users():
+    """List all registered users (admin endpoint for debugging).
+
+    WARNING: In production, this should be protected by admin-only authentication.
+    For now, returns only email addresses and creation dates.
+    """
+    users = get_users_collection()
+
+    # Fetch all users, excluding password hashes
+    cursor = users.find({}, {"password": 0}).sort("created_at", 1)
+
+    user_list = []
+    async for user in cursor:
+        user_list.append({
+            "id": str(user["_id"]),
             "email": user["email"],
+            "created_at": user.get("created_at", "").isoformat() if isinstance(user.get("created_at"), datetime) else str(user.get("created_at", "")),
             "name": user.get("name"),
             "college_id": user.get("college_id"),
-            "section": user.get("section"),
-            "semester": user.get("semester"),
-            "profile_picture": user.get("profile_picture")
-        }
+        })
+
+    return {
+        "success": True,
+        "count": len(user_list),
+        "users": user_list
     }
