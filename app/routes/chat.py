@@ -7,14 +7,36 @@ from fastapi import APIRouter, HTTPException
 from pydantic import ValidationError
 
 from app.models.request_models import AskRequest
-from app.services.rag_pipeline import answer_query
-from app.services.web_search import get_miet_basic_info, search_miet_specific, scrape_miet_page
 from app.utils.auth import get_current_user
 from fastapi import Depends
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+def answer_query(question: str, history=None):
+    """Load and run the RAG pipeline lazily to reduce import-time dependencies."""
+    from app.services.rag_pipeline import answer_query as _answer_query
+    return _answer_query(question, history)
+
+
+def get_miet_basic_info():
+    """Load web utilities lazily to keep route import lightweight."""
+    from app.services.web_search import get_miet_basic_info as _get_miet_basic_info
+    return _get_miet_basic_info()
+
+
+def search_miet_specific(query: str):
+    """Load web search function lazily."""
+    from app.services.web_search import search_miet_specific as _search_miet_specific
+    return _search_miet_specific(query)
+
+
+def scrape_miet_page(url_path: str):
+    """Load page scraping utility lazily."""
+    from app.services.web_search import scrape_miet_page as _scrape_miet_page
+    return _scrape_miet_page(url_path)
 
 
 @router.post("/ask")

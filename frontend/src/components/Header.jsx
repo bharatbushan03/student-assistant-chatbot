@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect, useContext } from 'react';
 import { Menu, Sun, Moon, PanelLeft, User, LogOut, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { AuthContext } from '../context/AuthContext';
+import { AuthContext } from '../context/auth-context';
 
-export function Header({ toggleSidebar, isDarkMode, toggleDarkMode }) {
+export function Header({ toggleSidebar, isDarkMode, toggleDarkMode, title = 'Miety AI' }) {
   const { user, logoutContext } = useContext(AuthContext);
   const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
@@ -25,25 +25,25 @@ export function Header({ toggleSidebar, isDarkMode, toggleDarkMode }) {
   };
 
   return (
-    <header className="flex-none h-14 border-b border-border bg-background flex items-center justify-between px-4 z-10">
+    <header className="z-10 flex h-14 flex-none items-center justify-between border-b border-border/80 bg-background/90 px-4 backdrop-blur">
       <div className="flex items-center gap-3">
         <button
           onClick={toggleSidebar}
-          className="p-2 -ml-2 rounded-md hover:bg-muted text-muted-foreground transition-colors"
+          className="-ml-2 rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted/80"
           aria-label="Toggle sidebar"
         >
           <PanelLeft size={20} className="hidden md:block" />
           <Menu size={20} className="md:hidden" />
         </button>
-        <div className="font-semibold text-lg bg-clip-text text-transparent bg-gradient-to-r from-primary to-ring">
-          Miety AI
+        <div className="text-[15px] font-semibold tracking-tight text-foreground">
+          {title}
         </div>
       </div>
 
       <div className="flex items-center gap-2">
         <button
           onClick={toggleDarkMode}
-          className="p-2 rounded-full hover:bg-muted text-muted-foreground transition-colors"
+          className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted/80"
           aria-label="Toggle theme"
         >
           {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
@@ -53,14 +53,14 @@ export function Header({ toggleSidebar, isDarkMode, toggleDarkMode }) {
         <div className="relative" ref={menuRef}>
           <button
             onClick={() => setShowMenu(!showMenu)}
-            className="p-2 rounded-full hover:bg-muted text-muted-foreground transition-colors"
+            className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted/80"
             aria-label="User menu"
           >
             <User size={20} />
           </button>
 
           {showMenu && (
-            <div className="absolute right-0 mt-2 w-48 bg-popover border border-border rounded-lg shadow-lg overflow-hidden z-50">
+            <div className="absolute right-0 z-50 mt-2 w-52 overflow-hidden rounded-xl border border-border bg-popover/95 shadow-xl backdrop-blur">
               <div className="px-4 py-3 border-b border-border">
                 <p className="text-sm font-medium text-foreground truncate">
                   {user?.name || 'User'}
@@ -74,14 +74,14 @@ export function Header({ toggleSidebar, isDarkMode, toggleDarkMode }) {
                   navigate('/profile');
                   setShowMenu(false);
                 }}
-                className="w-full px-4 py-2 text-sm text-foreground hover:bg-muted flex items-center gap-2 transition-colors"
+                className="flex w-full items-center gap-2 px-4 py-2 text-sm text-foreground transition-colors hover:bg-muted/70"
               >
                 <Settings size={16} />
                 Profile Settings
               </button>
               <button
                 onClick={handleLogout}
-                className="w-full px-4 py-2 text-sm text-destructive hover:bg-muted flex items-center gap-2 transition-colors"
+                className="flex w-full items-center gap-2 px-4 py-2 text-sm text-destructive transition-colors hover:bg-muted/70"
               >
                 <LogOut size={16} />
                 Logout

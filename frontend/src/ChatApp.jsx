@@ -3,13 +3,13 @@ import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { ChatWindow } from './components/ChatWindow';
 import { InputBar } from './components/InputBar';
-import { AuthContext } from './context/AuthContext';
+import { AuthContext } from './context/auth-context';
 
 // Helper for generating unique IDs
 const generateId = () => Math.random().toString(36).substring(2, 9);
 
 export default function ChatApp() {
-  const { logoutContext, user } = useContext(AuthContext);
+  const { user } = useContext(AuthContext);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     return localStorage.getItem('theme') === 'dark' || 
            (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
@@ -188,7 +188,7 @@ export default function ChatApp() {
       
       <main className="flex-1 flex flex-col min-w-0 h-full relative">
         <Header
-          toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+          toggleSidebar={() => setIsSidebarOpen((current) => !current)}
           isDarkMode={isDarkMode}
           toggleDarkMode={() => setIsDarkMode(!isDarkMode)}
           user={user}

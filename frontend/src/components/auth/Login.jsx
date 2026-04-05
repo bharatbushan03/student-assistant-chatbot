@@ -1,6 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { AuthContext } from '../../context/AuthContext';
+import { AuthContext } from '../../context/auth-context';
 import api from '../../utils/api';
 import { LogIn, Mail, Lock } from 'lucide-react';
 
@@ -33,20 +33,14 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/30 p-4">
-      {/* Background decoration */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 -left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 -right-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
-      </div>
-
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-md relative">
         {/* Card */}
-        <div className="bg-card rounded-2xl border border-border shadow-xl p-8">
+        <div className="rounded-2xl border border-border bg-card/95 p-8 shadow-[0_18px_50px_-24px_hsl(var(--foreground)/0.3)] backdrop-blur">
           {/* Logo and Title */}
           <div className="text-center mb-8">
-            <div className="w-14 h-14 bg-gradient-to-br from-primary to-primary/80 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-primary/20">
-              <LogIn size={28} className="text-primary-foreground" />
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-primary/20 bg-primary/12">
+              <LogIn size={26} className="text-primary" />
             </div>
             <h2 className="text-2xl font-bold text-foreground mb-1">
               Welcome Back
@@ -104,12 +98,11 @@ const Login = () => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-3 px-4 bg-gradient-to-r from-primary to-primary/90
+              className="w-full py-3 px-4 bg-primary
                 text-primary-foreground font-semibold rounded-xl
-                hover:from-primary/90 hover:to-primary/80
+                hover:bg-primary/90
                 disabled:opacity-50 disabled:cursor-not-allowed
-                transition-all duration-200 shadow-lg shadow-primary/20
-                hover:shadow-xl hover:shadow-primary/30"
+                transition-colors duration-200 shadow-sm"
             >
               {isSubmitting ? 'Signing in...' : 'Sign In'}
             </button>

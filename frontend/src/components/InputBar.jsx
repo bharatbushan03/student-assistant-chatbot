@@ -1,9 +1,30 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Sparkles } from 'lucide-react';
 
-export function InputBar({ onSendMessage, isProcessing }) {
-  const [input, setInput] = useState('');
+export function InputBar({
+  onSendMessage,
+  isProcessing,
+  placeholder = 'Ask me anything about MIET...',
+  helperText = 'AI-powered study assistant for MIET Jammu students',
+  onInputChange,
+  value,
+  onValueChange,
+}) {
+  const [internalInput, setInternalInput] = useState('');
   const textareaRef = useRef(null);
+
+  const isControlled = typeof value === 'string';
+  const input = isControlled ? value : internalInput;
+
+  const setInput = (nextValue) => {
+    if (!isControlled) {
+      setInternalInput(nextValue);
+    }
+
+    if (onValueChange) {
+      onValueChange(nextValue);
+    }
+  };
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -11,6 +32,12 @@ export function InputBar({ onSendMessage, isProcessing }) {
       textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 200)}px`;
     }
   }, [input]);
+
+  useEffect(() => {
+    if (onInputChange) {
+      onInputChange(input);
+    }
+  }, [input, onInputChange]);
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -21,7 +48,18 @@ export function InputBar({ onSendMessage, isProcessing }) {
 
   const handleSend = () => {
     if (input.trim() && !isProcessing) {
-      onSendMessage(input.trim());
+      const result = onSendMessage(input.trim());
+
+      if (result === false) {
+        return;
+      }
+
+      if (result && typeof result.then === 'function') {
+        result.catch(() => {
+          // The parent component handles send errors.
+        });
+      }
+
       setInput('');
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto';
@@ -42,7 +80,7 @@ export function InputBar({ onSendMessage, isProcessing }) {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Ask me anything about MIET..."
+          placeholder={placeholder}
           className="flex-1 max-h-48 py-3 px-3 bg-transparent
             outline-none resize-none text-foreground text-sm leading-relaxed
             placeholder:text-muted-foreground"
@@ -77,7 +115,7 @@ export function InputBar({ onSendMessage, isProcessing }) {
 
       <div className="flex items-center justify-center gap-2 mt-3 text-xs text-muted-foreground">
         <Sparkles size={12} className="opacity-50" />
-        <span>AI-powered study assistant for MIET Jammu students</span>
+        <span>{helperText}</span>
       </div>
     </div>
   );

@@ -1,7 +1,24 @@
-import React, { createContext, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { jwtDecode } from 'jwt-decode';
 import api from '../utils/api';
+import { AuthContext } from './auth-context';
 
-export const AuthContext = createContext();
+function normalizeUser(rawUser) {
+  if (!rawUser || typeof rawUser !== 'object') {
+    return null;
+  }
+
+  const normalizedId = rawUser.id || rawUser._id || null;
+  const normalizedAvatar = rawUser.avatar_url || rawUser.profile_picture || null;
+
+  return {
+    ...rawUser,
+    id: normalizedId,
+    _id: rawUser._id || normalizedId,
+    avatar_url: normalizedAvatar,
+    profile_picture: rawUser.profile_picture || normalizedAvatar,
+  };
+}
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -13,10 +30,30 @@ export const AuthProvider = ({ children }) => {
       if (token) {
         try {
           const res = await api.get('/auth/profile');
-          setUser(res.data.user);
+          setUser(normalizeUser(res.data.user));
         } catch (error) {
-          console.error('Failed to verify token:', error);
-          localStorage.removeItem('token');
+          const statusCode = error?.response?.status;
+          const isAuthFailure = statusCode === 401 || statusCode === 403;
+
+          if (isAuthFailure) {
+            localStorage.removeItem('token');
+            setUser(null);
+          } else {
+            // Keep user session on transient profile endpoint failures.
+            try {
+              const decoded = jwtDecode(token);
+              setUser(normalizeUser({
+                id: decoded?.id || decoded?._id,
+                _id: decoded?._id || decoded?.id,
+                email: decoded?.email,
+                name: decoded?.name,
+                avatar_url: decoded?.avatar_url || decoded?.profile_picture,
+                profile_picture: decoded?.profile_picture || decoded?.avatar_url,
+              }));
+            } catch {
+              setUser(null);
+            }
+          }
         }
       }
       setLoading(false);
@@ -26,7 +63,7 @@ export const AuthProvider = ({ children }) => {
 
   const loginContext = (userData, token) => {
     localStorage.setItem('token', token);
-    setUser(userData);
+    setUser(normalizeUser(userData));
   };
 
   const logoutContext = () => {

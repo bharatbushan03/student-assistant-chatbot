@@ -1,8 +1,8 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
-import { AuthContext } from '../../context/AuthContext';
+import { AuthContext } from '../../context/auth-context';
 import { useNavigate } from 'react-router-dom';
 import api from '../../utils/api';
-import { User, Mail, IdCard, GraduationCap, Layers, Camera, Save, X, Upload } from 'lucide-react';
+import { User, Mail, IdCard, GraduationCap, Layers, Camera, Save, X } from 'lucide-react';
 
 const Profile = () => {
   const { user, loading } = useContext(AuthContext);

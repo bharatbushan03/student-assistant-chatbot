@@ -35,7 +35,9 @@
       "Bash(powershell:*)",
       "Bash(git add:*)",
       "Bash(ls -la *.txt *.toml)",
-      "Bash(.\\\\.venv\\\\Scripts\\\\Activate.ps1:*)"
+      "Bash(.\\\\.venv\\\\Scripts\\\\Activate.ps1:*)",
+      "Bash(pytest tests/ -v --tb=short)",
+      "Bash(pip show:*)"
     ]
   }
 }

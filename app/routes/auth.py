@@ -8,7 +8,7 @@ from typing import Optional, Any
 from bson import ObjectId
 
 from fastapi import APIRouter, HTTPException, Depends
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 
 from app.config.settings import get_settings
 from app.utils.auth import get_current_user
@@ -17,6 +17,8 @@ from app.db.mongodb import get_users_collection
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+EMAIL_PATTERN = r"^[^\s@]+@[^\s@]+\.[^\s@]+$"
 
 
 def hash_password(password: str) -> str:
@@ -34,25 +36,27 @@ def verify_password(password: str, hashed_password: str) -> bool:
         return False
 
 
-def create_token(user_id: str, email: str) -> str:
+def create_token(user_id: str, email: str, name: Optional[str] = None, avatar_url: Optional[str] = None) -> str:
     """Create JWT token for authenticated user."""
     settings = get_settings()
     payload = {
         "id": user_id,
         "email": email,
+        "name": name,
+        "avatar_url": avatar_url,
         "exp": datetime.utcnow() + timedelta(days=7)
     }
     return jwt.encode(payload, settings.jwt_secret, algorithm="HS256")
 
 
 class SignupRequest(BaseModel):
-    email: str = EmailStr()
+    email: str = Field(..., min_length=5, pattern=EMAIL_PATTERN)
     password: str = Field(..., min_length=8)
 
 
 class LoginRequest(BaseModel):
-    email: str = EmailStr()
-    password: str
+    email: str = Field(..., min_length=5, pattern=EMAIL_PATTERN)
+    password: str = Field(..., min_length=1)
 
 
 class UserProfile(BaseModel):
@@ -110,7 +114,12 @@ async def signup(request: SignupRequest):
     result = await users.insert_one(user_data)
     user_id = str(result.inserted_id)
 
-    token = create_token(user_id, email)
+    token = create_token(
+        user_id,
+        email,
+        user_data.get("name"),
+        user_data.get("profile_picture"),
+    )
 
     return {
         "success": True,
@@ -141,7 +150,12 @@ async def login(request: LoginRequest):
             detail="Invalid credentials."
         )
 
-    token = create_token(str(user["_id"]), email)
+    token = create_token(
+        str(user["_id"]),
+        email,
+        user.get("name"),
+        user.get("profile_picture"),
+    )
 
     return {
         "success": True,

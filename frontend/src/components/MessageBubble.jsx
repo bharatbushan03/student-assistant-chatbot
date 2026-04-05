@@ -15,15 +15,15 @@ export function MessageBubble({ message }) {
   };
 
   return (
-    <div className={`w-full py-5 px-4 animate-fade-in group ${isAI ? 'bg-muted/20' : ''}`}>
+    <div className={`group w-full px-4 py-5 animate-fade-in ${isAI ? 'border-y border-border/40 bg-card/60' : ''}`}>
       <div className="max-w-4xl mx-auto flex gap-4">
         {/* Avatar */}
         <div className="flex-none mt-0.5">
           <div className={`
-            w-8 h-8 rounded-full flex items-center justify-center shrink-0 shadow-sm
+            w-8 h-8 rounded-full flex items-center justify-center shrink-0 border shadow-sm
             ${isAI
-              ? 'bg-gradient-to-br from-primary to-primary/80 text-primary-foreground'
-              : 'bg-gradient-to-br from-secondary to-muted text-foreground border border-border'
+              ? 'border-primary/25 bg-primary/12 text-primary'
+              : 'border-border bg-secondary text-secondary-foreground'
             }
           `}>
             {isAI ? <Bot size={16} /> : <User size={16} />}
@@ -53,7 +53,7 @@ export function MessageBubble({ message }) {
             {isAI ? (
               <ReactMarkdown
                 components={{
-                  code({ node, inline, className, children, ...props }) {
+                  code({ inline, className, children, ...props }) {
                     const match = /language-(\w+)/.exec(className || '');
                     return !inline && match ? (
                       <SyntaxHighlighter
