@@ -4,9 +4,10 @@ import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from pymongo.errors import PyMongoError
 import socketio
 
 from app.routes import chat, auth, groups, messages
@@ -113,8 +114,11 @@ async def lifespan(application: FastAPI):
         await client.admin.command('ping')
         logger.info("✅  MongoDB connected")
     except Exception as e:
-        logger.error(f"❌  MongoDB connection failed: {e}")
-        raise
+        logger.warning(
+            "⚠️  MongoDB connection failed during startup: %s. "
+            "Continuing without DB-dependent features.",
+            e,
+        )
 
     logger.info("✅  Configuration validated")
     yield
@@ -130,6 +134,16 @@ fastapi_app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+
+
+@fastapi_app.exception_handler(PyMongoError)
+async def handle_mongodb_errors(request: Request, exc: PyMongoError):
+    """Return a stable API response when MongoDB is unavailable."""
+    logger.error("❌  MongoDB operation failed on %s: %s", request.url.path, exc)
+    return JSONResponse(
+        status_code=503,
+        content={"detail": "Database service is temporarily unavailable. Please try again shortly."},
+    )
 
 # ── CORS ──────────────────────────────────────────────────────────────
 fastapi_app.add_middleware(
