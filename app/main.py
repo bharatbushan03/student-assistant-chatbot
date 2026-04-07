@@ -10,7 +10,7 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from pymongo.errors import PyMongoError
 import socketio
 
-from app.routes import chat, auth, groups, messages
+from app.routes import chat, auth, groups, messages, projects
 from app.websocket.server import sio
 
 logger = logging.getLogger("uvicorn.error")
@@ -168,6 +168,7 @@ async def health_check():
 # ── API routes ────────────────────────────────────────────────────────
 fastapi_app.include_router(chat.router, prefix="/chat", tags=["Chat"])
 fastapi_app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
+fastapi_app.include_router(projects.router, prefix="/api/projects", tags=["Projects"])
 fastapi_app.include_router(groups.router, prefix="/api/groups", tags=["Groups"])
 fastapi_app.include_router(messages.router, prefix="/api/groups", tags=["Messages"])
 

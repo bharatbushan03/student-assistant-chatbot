@@ -1,23 +1,7 @@
 version: '3.8'
 
 services:
-  # Node.js Auth Backend (port 5000)
-  auth-backend:
-    build:
-      context: ./backend-auth
-      dockerfile: Dockerfile
-    ports:
-      - "5000:5000"
-    environment:
-      - PORT=5000
-      - MONGODB_URI=${MONGODB_URI}
-      - JWT_SECRET=${JWT_SECRET}
-    depends_on:
-      - mongo
-    networks:
-      - miety-network
-
-  # MongoDB (for auth backend)
+  # MongoDB
   mongo:
     image: mongo:7
     ports:
@@ -36,6 +20,8 @@ services:
       - "10000:10000"
     environment:
       - PORT=10000
+      - MONGODB_URI=${MONGODB_URI:-mongodb://mongo:27017/miety_ai}
+      - MONGODB_DATABASE=${MONGODB_DATABASE:-miety_ai}
       - HUGGINGFACEHUB_API_TOKEN=${HUGGINGFACEHUB_API_TOKEN}
       - PINECONE_API_KEY=${PINECONE_API_KEY}
       - PINECONE_INDEX_NAME=${PINECONE_INDEX_NAME:-miet-assistant-chatbot}
@@ -43,7 +29,7 @@ services:
       - PINECONE_REGION=${PINECONE_REGION:-us-east-1}
       - JWT_SECRET=${JWT_SECRET}
     depends_on:
-      - auth-backend
+      - mongo
     networks:
       - miety-network
 
@@ -56,7 +42,6 @@ services:
       - "3000:80"
     depends_on:
       - chat-backend
-      - auth-backend
     networks:
       - miety-network
 

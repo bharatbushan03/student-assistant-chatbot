@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect } from 'react';
 import { jwtDecode } from 'jwt-decode';
 import api from '../utils/api';
-import { AuthContext } from './auth-context';
+
+export const AuthContext = createContext(null);
 
 function normalizeUser(rawUser) {
   if (!rawUser || typeof rawUser !== 'object') {

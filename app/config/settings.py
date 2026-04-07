@@ -40,6 +40,11 @@ class Settings(BaseSettings):
     mongodb_uri: str = Field(default="mongodb://localhost:27017", alias="MONGODB_URI")
     mongodb_database: str = Field(default="miety_ai", alias="MONGODB_DATABASE")
 
+    # Project workspace
+    project_upload_max_mb: int = Field(default=10, alias="PROJECT_UPLOAD_MAX_MB")
+    project_stream_rate_limit_per_min: int = Field(default=20, alias="PROJECT_STREAM_RATE_LIMIT_PER_MIN")
+    project_upload_rate_limit_per_min: int = Field(default=30, alias="PROJECT_UPLOAD_RATE_LIMIT_PER_MIN")
+
     model_config = SettingsConfigDict(
         env_file=str(PROJECT_ROOT / ".env"),
         extra="ignore",

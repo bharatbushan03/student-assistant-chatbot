@@ -2,7 +2,9 @@ import React, { useMemo, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { Bot, Check, Copy, CornerUpLeft, Pencil, Trash2, User } from 'lucide-react';
+import { Bot, Check, Copy, CornerUpLeft, Paperclip, Pencil, Trash2, User } from 'lucide-react';
+
+import { downloadGroupFile } from '../../utils/groupsApi';
 
 function formatTime(timestamp) {
   if (!timestamp) {
@@ -42,6 +44,25 @@ function getInitials(name) {
     .toUpperCase();
 }
 
+function parseContentDispositionFilename(contentDisposition, fallbackName) {
+  const match = /filename="?([^";]+)"?/i.exec(contentDisposition || '');
+  if (match && match[1]) {
+    return match[1];
+  }
+  return fallbackName;
+}
+
+function triggerBlobDownload(blob, fileName) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
 function ReactionsBar({ reactions }) {
   if (!reactions || reactions.length === 0) {
     return null;
@@ -73,8 +94,34 @@ export function GroupMessageBubble({
   onDelete,
 }) {
   const [copied, setCopied] = useState(false);
+  const [downloadingAttachmentId, setDownloadingAttachmentId] = useState(null);
   const isAI = message.type === 'ai_response' || message.sender?.id === 'ai-assistant';
   const isCurrentUser = message.sender?.id === currentUserId;
+
+  const attachmentItems = useMemo(() => {
+    const attachments = message?.metadata?.attachments;
+    if (!Array.isArray(attachments)) {
+      return [];
+    }
+
+    return attachments.map((item, index) => {
+      if (typeof item === 'string') {
+        return {
+          id: `legacy-${index}`,
+          file_id: null,
+          filename: item,
+          preview_text: '',
+        };
+      }
+
+      return {
+        id: String(item?.id || item?.file_id || `attachment-${index}`),
+        file_id: item?.file_id || item?.id || null,
+        filename: String(item?.filename || item?.name || `Attachment ${index + 1}`),
+        preview_text: String(item?.preview_text || ''),
+      };
+    });
+  }, [message?.metadata?.attachments]);
 
   const senderLabel = useMemo(() => {
     if (isAI) {
@@ -92,6 +139,24 @@ export function GroupMessageBubble({
     await navigator.clipboard.writeText(message.content);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleDownloadAttachment = async (attachment) => {
+    if (!attachment?.file_id || !message?.group_id) {
+      return;
+    }
+
+    setDownloadingAttachmentId(attachment.id);
+
+    try {
+      const { blob, contentDisposition } = await downloadGroupFile(message.group_id, attachment.file_id);
+      const fileName = parseContentDispositionFilename(contentDisposition, attachment.filename || 'attachment');
+      triggerBlobDownload(blob, fileName);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setDownloadingAttachmentId(null);
+    }
   };
 
   const avatarNode = message.sender?.avatar_url ? (
@@ -167,6 +232,30 @@ export function GroupMessageBubble({
             >
               {message.content}
             </ReactMarkdown>
+
+            {attachmentItems.length > 0 ? (
+              <div className="not-prose mt-3 flex flex-wrap gap-2">
+                {attachmentItems.map((attachment) => {
+                  const isDownloading = downloadingAttachmentId === attachment.id;
+                  const isDownloadable = Boolean(attachment.file_id);
+
+                  return (
+                    <button
+                      key={attachment.id}
+                      type="button"
+                      onClick={() => handleDownloadAttachment(attachment)}
+                      disabled={!isDownloadable || isDownloading}
+                      className="inline-flex max-w-full items-center gap-2 rounded-full border border-border bg-muted/50 px-3 py-1.5 text-xs text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-65"
+                      title={isDownloadable ? 'Download file' : 'Attachment info only'}
+                    >
+                      <Paperclip size={12} />
+                      <span className="truncate max-w-[220px]">{attachment.filename}</span>
+                      {isDownloading ? <span>...</span> : null}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : null}
           </div>
 
           <ReactionsBar reactions={message.reactions} />

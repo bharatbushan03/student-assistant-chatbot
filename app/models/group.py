@@ -44,6 +44,30 @@ class GroupMemberModel:
         }
 
 
+class GroupFileModel:
+    """Group file attachment collection model."""
+
+    collection_name = "group_files"
+
+    @staticmethod
+    def from_dict(data: dict) -> dict:
+        """Create a group file document from dictionary."""
+        now = datetime.utcnow()
+        return {
+            "group_id": data.get("group_id"),
+            "uploaded_by": data.get("uploaded_by"),
+            "filename": data.get("filename"),
+            "stored_name": data.get("stored_name"),
+            "storage_path": data.get("storage_path"),
+            "content_type": data.get("content_type", "application/octet-stream"),
+            "size_bytes": data.get("size_bytes", 0),
+            "preview_text": data.get("preview_text", ""),
+            "extracted_text": data.get("extracted_text", ""),
+            "created_at": data.get("created_at", now),
+            "updated_at": data.get("updated_at", now),
+        }
+
+
 class MessageModel:
     """Message collection model."""
 

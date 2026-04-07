@@ -1,16 +1,25 @@
 """Group management REST API routes."""
 
 import logging
+from datetime import datetime
+from pathlib import Path
 from typing import List
-from fastapi import APIRouter, HTTPException, Depends, Query
+from bson import ObjectId
+from bson.errors import InvalidId
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
+from app.config.settings import PROJECT_ROOT, get_settings
+from app.models.group import GroupFileModel
+from app.services.file_attachment_service import ingest_upload_file
 from app.utils.auth import get_current_user
 from app.schemas.group import (
     GroupCreate,
     GroupUpdate,
     GroupResponse,
     GroupDetailResponse,
+    GroupFileResponse,
     AddMemberSchema,
     ChangeRoleSchema,
     MemberResponse,
@@ -33,6 +42,26 @@ router = APIRouter()
 class AddFriendByEmailRequest(BaseModel):
     """Simple payload for adding a group member by email."""
     email: str = Field(..., min_length=5)
+
+
+def _to_object_id(value: str) -> ObjectId | None:
+    try:
+        return ObjectId(value)
+    except (InvalidId, TypeError, ValueError):
+        return None
+
+
+def _serialize_group_file(document: dict) -> dict:
+    return {
+        "id": str(document["_id"]),
+        "group_id": document.get("group_id"),
+        "filename": document.get("filename", "file"),
+        "content_type": document.get("content_type", "application/octet-stream"),
+        "size_bytes": document.get("size_bytes", 0),
+        "preview_text": document.get("preview_text", ""),
+        "uploaded_by": document.get("uploaded_by"),
+        "created_at": document.get("created_at"),
+    }
 
 
 # ── Group CRUD ───────────────────────────────────────────────────────
@@ -133,6 +162,93 @@ async def delete_group(
         raise HTTPException(status_code=404, detail="Group not found")
 
     return None
+
+
+@router.post("/{group_id}/files", response_model=List[GroupFileResponse], status_code=201)
+async def upload_group_files(
+    group_id: str,
+    files: List[UploadFile] = File(...),
+    current_user: dict = Depends(get_current_user),
+):
+    """Upload files into a group and return attachment metadata."""
+    is_member = await GroupService.is_member(group_id, current_user["id"])
+    if not is_member:
+        raise HTTPException(status_code=403, detail="You are not a member of this group")
+
+    db = get_database()
+    group_files_collection = db[GroupFileModel.collection_name]
+    save_dir = PROJECT_ROOT / "data" / "group_uploads" / group_id
+    max_bytes = get_settings().project_upload_max_mb * 1024 * 1024
+
+    uploaded_files = []
+    for upload in files:
+        try:
+            parsed = await ingest_upload_file(upload, max_bytes=max_bytes, save_dir=save_dir)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        except Exception as exc:
+            logger.exception("Group file upload failed: %s", exc)
+            raise HTTPException(status_code=400, detail="Unable to process one or more uploaded files.") from exc
+
+        document = GroupFileModel.from_dict(
+            {
+                "group_id": group_id,
+                "uploaded_by": current_user["id"],
+                "filename": parsed["filename"],
+                "stored_name": parsed["stored_name"],
+                "storage_path": parsed["storage_path"],
+                "content_type": parsed["content_type"],
+                "size_bytes": parsed["size_bytes"],
+                "preview_text": parsed["preview_text"],
+                "extracted_text": parsed["extracted_text"],
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
+            }
+        )
+
+        result = await group_files_collection.insert_one(document)
+        stored = await group_files_collection.find_one({"_id": result.inserted_id})
+        uploaded_files.append(_serialize_group_file(stored))
+
+    return uploaded_files
+
+
+@router.get("/{group_id}/files/{file_id}/download")
+async def download_group_file(
+    group_id: str,
+    file_id: str,
+    current_user: dict = Depends(get_current_user),
+):
+    """Download a previously uploaded group file for group members."""
+    is_member = await GroupService.is_member(group_id, current_user["id"])
+    if not is_member:
+        raise HTTPException(status_code=403, detail="You are not a member of this group")
+
+    object_id = _to_object_id(file_id)
+    if object_id is None:
+        raise HTTPException(status_code=404, detail="File not found")
+
+    db = get_database()
+    group_files_collection = db[GroupFileModel.collection_name]
+    file_doc = await group_files_collection.find_one({"_id": object_id, "group_id": group_id})
+
+    if not file_doc:
+        raise HTTPException(status_code=404, detail="File not found")
+
+    storage_path = file_doc.get("storage_path")
+    if not storage_path:
+        raise HTTPException(status_code=404, detail="File content is unavailable")
+
+    storage_file = Path(storage_path).resolve()
+    group_root = (PROJECT_ROOT / "data" / "group_uploads").resolve()
+    if not storage_file.is_file() or group_root not in storage_file.parents:
+        raise HTTPException(status_code=404, detail="File content is unavailable")
+
+    return FileResponse(
+        str(storage_file),
+        media_type=file_doc.get("content_type", "application/octet-stream"),
+        filename=file_doc.get("filename", "file"),
+    )
 
 
 # ── Member Management ────────────────────────────────────────────────

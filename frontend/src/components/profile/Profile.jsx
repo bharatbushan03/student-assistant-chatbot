@@ -1,8 +1,8 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
-import { AuthContext } from '../../context/auth-context';
+import { AuthContext } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import api from '../../utils/api';
-import { User, Mail, IdCard, GraduationCap, Layers, Camera, Save, X } from 'lucide-react';
+import { User, Mail, IdCard, GraduationCap, Layers, Camera, Save, X, Lock, Briefcase } from 'lucide-react';
 
 const Profile = () => {
   const { user, loading } = useContext(AuthContext);
@@ -14,13 +14,20 @@ const Profile = () => {
     college_id: '',
     section: '',
     semester: '',
+    project: '',
     profile_picture: ''
   });
 
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [previewImage, setPreviewImage] = useState(null);
+  const [passwordData, setPasswordData] = useState({
+    current_password: '',
+    new_password: '',
+    confirm_password: ''
+  });
 
   useEffect(() => {
     if (!loading && !user) {
@@ -32,6 +39,7 @@ const Profile = () => {
         college_id: user.college_id || '',
         section: user.section || '',
         semester: user.semester || '',
+        project: user.project || '',
         profile_picture: user.profile_picture || ''
       });
       if (user.profile_picture) {
@@ -43,6 +51,11 @@ const Profile = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handlePasswordInputChange = (e) => {
+    const { name, value } = e.target;
+    setPasswordData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleImageSelect = (e) => {
@@ -89,12 +102,52 @@ const Profile = () => {
         college_id: user.college_id || '',
         section: user.section || '',
         semester: user.semester || '',
+        project: user.project || '',
         profile_picture: user.profile_picture || ''
       });
       setPreviewImage(user.profile_picture || null);
     }
     setIsEditing(false);
     setMessage({ type: '', text: '' });
+  };
+
+  const handleChangePassword = async () => {
+    setMessage({ type: '', text: '' });
+
+    if (passwordData.new_password.length < 8) {
+      setMessage({ type: 'error', text: 'New password must be at least 8 characters long.' });
+      return;
+    }
+
+    if (passwordData.new_password !== passwordData.confirm_password) {
+      setMessage({ type: 'error', text: 'New password and confirmation do not match.' });
+      return;
+    }
+
+    if (passwordData.current_password === passwordData.new_password) {
+      setMessage({ type: 'error', text: 'New password must be different from current password.' });
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      const { data } = await api.post('/auth/change-password', passwordData);
+      if (data.success) {
+        setMessage({ type: 'success', text: 'Password changed successfully!' });
+        setPasswordData({
+          current_password: '',
+          new_password: '',
+          confirm_password: ''
+        });
+      }
+    } catch (error) {
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.detail || 'Failed to change password'
+      });
+    } finally {
+      setIsChangingPassword(false);
+    }
   };
 
   if (loading) {
@@ -315,6 +368,94 @@ const Profile = () => {
                     {formData.semester ? `Semester ${formData.semester}` : 'Not set'}
                   </div>
                 )}
+              </div>
+
+              {/* Project */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-2">
+                  <Briefcase size={16} />
+                  Project
+                </label>
+                {isEditing ? (
+                  <textarea
+                    name="project"
+                    value={formData.project}
+                    onChange={handleInputChange}
+                    placeholder="Enter your current project title or details"
+                    rows={3}
+                    className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                  />
+                ) : (
+                  <div className="px-4 py-3 bg-muted rounded-lg text-foreground whitespace-pre-wrap">
+                    {formData.project || 'Not set'}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Change Password */}
+            <div className="mt-8 pt-6 border-t border-border">
+              <h3 className="text-lg font-semibold text-foreground mb-2">Change Password</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Keep your account secure by updating your password regularly.
+              </p>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-2">
+                    <Lock size={16} />
+                    Current Password
+                  </label>
+                  <input
+                    type="password"
+                    name="current_password"
+                    value={passwordData.current_password}
+                    onChange={handlePasswordInputChange}
+                    autoComplete="current-password"
+                    placeholder="Enter current password"
+                    className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-2">
+                    <Lock size={16} />
+                    New Password
+                  </label>
+                  <input
+                    type="password"
+                    name="new_password"
+                    value={passwordData.new_password}
+                    onChange={handlePasswordInputChange}
+                    autoComplete="new-password"
+                    placeholder="Enter new password"
+                    className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-2">
+                    <Lock size={16} />
+                    Confirm New Password
+                  </label>
+                  <input
+                    type="password"
+                    name="confirm_password"
+                    value={passwordData.confirm_password}
+                    onChange={handlePasswordInputChange}
+                    autoComplete="new-password"
+                    placeholder="Confirm new password"
+                    className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                  />
+                </div>
+
+                <button
+                  onClick={handleChangePassword}
+                  disabled={isChangingPassword}
+                  className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-lg hover:bg-primary/90 disabled:opacity-50 transition-colors"
+                >
+                  {isChangingPassword ? 'Updating Password...' : 'Update Password'}
+                </button>
               </div>
             </div>
           </div>

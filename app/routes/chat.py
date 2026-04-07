@@ -2,13 +2,15 @@
 
 import asyncio
 import logging
+from uuid import uuid4
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from pydantic import ValidationError
 
+from app.config.settings import get_settings
 from app.models.request_models import AskRequest
+from app.services.file_attachment_service import ingest_upload_file
 from app.utils.auth import get_current_user
-from fastapi import Depends
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +64,36 @@ async def ask_question(payload: AskRequest, current_user: dict = Depends(get_cur
             status_code=500,
             detail="An unexpected error occurred. Please try again later.",
         ) from exc
+
+
+@router.post("/files/ingest")
+async def ingest_chat_files(
+    files: list[UploadFile] = File(...),
+    current_user: dict = Depends(get_current_user),
+):
+    """Ingest chat attachments and return extracted text snippets for prompt context."""
+    max_bytes = get_settings().project_upload_max_mb * 1024 * 1024
+    processed_files = []
+
+    for upload in files:
+        try:
+            parsed = await ingest_upload_file(upload, max_bytes=max_bytes)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        except Exception as exc:
+            logger.exception("Chat file ingestion failed: %s", exc)
+            raise HTTPException(status_code=400, detail="Unable to process one or more uploaded files.") from exc
+
+        processed_files.append({
+            "id": uuid4().hex,
+            "name": parsed["filename"],
+            "content_type": parsed["content_type"],
+            "size_bytes": parsed["size_bytes"],
+            "preview_text": parsed["preview_text"],
+            "extracted_text": parsed["extracted_text"],
+        })
+
+    return {"files": processed_files}
 
 
 @router.get("/miet-info")

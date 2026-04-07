@@ -80,6 +80,18 @@ class GroupDetailResponse(GroupResponse):
     members: List[GroupMemberSchema] = Field(default_factory=list)
 
 
+class GroupFileResponse(BaseModel):
+    """Schema for group file attachment response."""
+    id: str
+    group_id: str
+    filename: str
+    content_type: str
+    size_bytes: int
+    preview_text: str
+    uploaded_by: str
+    created_at: datetime
+
+
 # ── Message Schemas ──────────────────────────────────────────────────
 
 class MessageCreate(BaseModel):
