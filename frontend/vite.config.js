@@ -23,7 +23,11 @@ export default defineConfig({
         ws: true,
       },
       '/auth': {
-        target: 'http://127.0.0.1:5000',
+        target: 'http://127.0.0.1:10000',
+        changeOrigin: true,
+      },
+      '/api/projects': {
+        target: 'http://127.0.0.1:10000',
         changeOrigin: true,
       }
     }

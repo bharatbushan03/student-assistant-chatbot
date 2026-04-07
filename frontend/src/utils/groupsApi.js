@@ -31,11 +31,24 @@ export async function createGroup(groupPayload) {
   return response.data;
 }
 
+export async function updateGroup(groupId, updates) {
+  const response = await api.put(`/api/groups/${groupId}`, updates);
+  return response.data;
+}
+
+export async function deleteGroup(groupId) {
+  await api.delete(`/api/groups/${groupId}`);
+}
+
 export async function addGroupMemberByEmail(groupId, email) {
   const response = await api.post(`/api/groups/${groupId}/members/by-email`, {
     email,
   });
   return response.data;
+}
+
+export async function removeGroupMember(groupId, userId) {
+  await api.delete(`/api/groups/${groupId}/members/${userId}`);
 }
 
 export async function searchGroupMessages(groupId, query, limit = 20) {
@@ -58,4 +71,29 @@ export async function deleteGroupMessage(groupId, messageId) {
 
 export async function leaveGroup(groupId) {
   await api.post(`/api/groups/${groupId}/leave`);
+}
+
+export async function uploadGroupFiles(groupId, files) {
+  const formData = new FormData();
+  files.forEach((file) => formData.append('files', file));
+
+  const response = await api.post(`/api/groups/${groupId}/files`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+
+  return response.data;
+}
+
+export async function downloadGroupFile(groupId, fileId) {
+  const response = await api.get(`/api/groups/${groupId}/files/${fileId}/download`, {
+    responseType: 'blob',
+  });
+
+  return {
+    blob: response.data,
+    contentType: response.headers['content-type'] || 'application/octet-stream',
+    contentDisposition: response.headers['content-disposition'] || '',
+  };
 }

@@ -4,8 +4,7 @@ import logging
 import jwt
 import bcrypt
 from datetime import datetime, timedelta
-from typing import Optional, Any
-from bson import ObjectId
+from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, Field
@@ -66,6 +65,7 @@ class UserProfile(BaseModel):
     college_id: Optional[str] = None
     section: Optional[str] = None
     semester: Optional[str] = None
+    project: Optional[str] = None
     profile_picture: Optional[str] = None
 
 
@@ -74,7 +74,14 @@ class ProfileUpdateRequest(BaseModel):
     college_id: Optional[str] = None
     section: Optional[str] = None
     semester: Optional[str] = None
+    project: Optional[str] = None
     profile_picture: Optional[str] = None
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str = Field(..., min_length=1)
+    new_password: str = Field(..., min_length=8)
+    confirm_password: str = Field(..., min_length=8)
 
 
 @router.post("/signup")
@@ -108,6 +115,7 @@ async def signup(request: SignupRequest):
         "college_id": None,
         "section": None,
         "semester": None,
+        "project": None,
         "profile_picture": None
     }
 
@@ -130,6 +138,7 @@ async def signup(request: SignupRequest):
             "college_id": None,
             "section": None,
             "semester": None,
+            "project": None,
             "profile_picture": None
         },
         "token": token
@@ -166,6 +175,7 @@ async def login(request: LoginRequest):
             "college_id": user.get("college_id"),
             "section": user.get("section"),
             "semester": user.get("semester"),
+            "project": user.get("project"),
             "profile_picture": user.get("profile_picture")
         },
         "token": token
@@ -195,6 +205,7 @@ async def get_profile(current_user: dict = Depends(get_current_user)):
             "college_id": user.get("college_id"),
             "section": user.get("section"),
             "semester": user.get("semester"),
+            "project": user.get("project"),
             "profile_picture": user.get("profile_picture")
         }
     }
@@ -227,6 +238,8 @@ async def update_profile(
         update_data["section"] = profile_data.section
     if profile_data.semester is not None:
         update_data["semester"] = profile_data.semester
+    if profile_data.project is not None:
+        update_data["project"] = profile_data.project
     if profile_data.profile_picture is not None:
         update_data["profile_picture"] = profile_data.profile_picture
 
@@ -245,8 +258,61 @@ async def update_profile(
             "college_id": updated_user.get("college_id"),
             "section": updated_user.get("section"),
             "semester": updated_user.get("semester"),
+            "project": updated_user.get("project"),
             "profile_picture": updated_user.get("profile_picture")
         }
+    }
+
+
+@router.post("/change-password")
+async def change_password(
+    request: ChangePasswordRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """Change current user's password after verifying the existing password."""
+    email = current_user.get("email")
+
+    users = get_users_collection()
+    user = await users.find_one({"email": email})
+
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found."
+        )
+
+    if request.new_password != request.confirm_password:
+        raise HTTPException(
+            status_code=400,
+            detail="New password and confirmation do not match."
+        )
+
+    stored_password = user.get("password", "")
+    if not stored_password or not verify_password(request.current_password, stored_password):
+        raise HTTPException(
+            status_code=400,
+            detail="Current password is incorrect."
+        )
+
+    if request.current_password == request.new_password:
+        raise HTTPException(
+            status_code=400,
+            detail="New password must be different from current password."
+        )
+
+    await users.update_one(
+        {"email": email},
+        {
+            "$set": {
+                "password": hash_password(request.new_password),
+                "updated_at": datetime.utcnow(),
+            }
+        }
+    )
+
+    return {
+        "success": True,
+        "message": "Password changed successfully."
     }
 
 
@@ -270,6 +336,7 @@ async def list_all_users():
             "created_at": user.get("created_at", "").isoformat() if isinstance(user.get("created_at"), datetime) else str(user.get("created_at", "")),
             "name": user.get("name"),
             "college_id": user.get("college_id"),
+            "project": user.get("project"),
         })
 
     return {

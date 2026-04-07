@@ -5,6 +5,7 @@ import Login from './components/auth/Login';
 import Signup from './components/auth/Signup';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import ChatApp from './ChatApp';
+import ProjectsApp from './ProjectsApp';
 import GroupChatApp from './GroupChatApp';
 import Profile from './components/profile/Profile';
 import PrivacyPolicy from './components/legal/PrivacyPolicy';
@@ -23,6 +24,33 @@ function App() {
             element={
               <ProtectedRoute>
                 <ChatApp />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/projects"
+            element={
+              <ProtectedRoute>
+                <ProjectsApp />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/projects/:projectId"
+            element={
+              <ProtectedRoute>
+                <ProjectsApp />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/projects/:projectId/chats/:chatId"
+            element={
+              <ProtectedRoute>
+                <ProjectsApp />
               </ProtectedRoute>
             }
           />

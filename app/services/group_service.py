@@ -1,12 +1,15 @@
 """Group service layer for business logic and database operations."""
 
+import shutil
 from datetime import datetime
+from pathlib import Path
 from typing import List, Optional, Dict, Any, Union
 from bson import ObjectId
 from bson.errors import InvalidId
 
+from app.config.settings import PROJECT_ROOT
 from app.db.mongodb import get_database
-from app.models.group import GroupModel, GroupMemberModel
+from app.models.group import GroupFileModel, GroupModel, GroupMemberModel
 from app.schemas.group import RoleEnum
 
 
@@ -148,6 +151,7 @@ class GroupService:
         db = get_database()
         groups_collection = db[GroupModel.collection_name]
         members_collection = db[GroupMemberModel.collection_name]
+        group_files_collection = db[GroupFileModel.collection_name]
         messages_collection = db["messages"]
         reactions_collection = db["message_reactions"]
         ai_context_collection = db["ai_context"]
@@ -165,12 +169,30 @@ class GroupService:
         ).to_list(length=None)
         message_ids = [str(doc["_id"]) for doc in message_documents if doc.get("_id") is not None]
 
+        group_files = await group_files_collection.find({"group_id": group_id}).to_list(length=None)
+        for file_doc in group_files:
+            storage_path = file_doc.get("storage_path")
+            if not storage_path:
+                continue
+
+            file_path = Path(storage_path)
+            if file_path.exists():
+                try:
+                    file_path.unlink()
+                except OSError:
+                    pass
+
         # Cascade delete related data
         await members_collection.delete_many({"group_id": group_id})
         await messages_collection.delete_many({"group_id": group_id})
+        await group_files_collection.delete_many({"group_id": group_id})
         if message_ids:
             await reactions_collection.delete_many({"message_id": {"$in": message_ids}})
         await ai_context_collection.delete_one({"group_id": group_id})
+
+        group_upload_dir = PROJECT_ROOT / "data" / "group_uploads" / group_id
+        if group_upload_dir.exists():
+            shutil.rmtree(group_upload_dir, ignore_errors=True)
 
         return True
 

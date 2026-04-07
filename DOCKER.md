@@ -2,127 +2,112 @@
 
 ## Architecture
 
-The application uses Docker Compose to run 4 services:
+This project runs as 3 services in Docker Compose:
 
 | Service | Port | Description |
 |---------|------|-------------|
 | **Frontend** | 3000 | React app served by Nginx |
-| **Auth Backend** | 5000 | Node.js + Express + MongoDB |
-| **Chat Backend** | 10000 | FastAPI + Pinecone + HuggingFace |
-| **MongoDB** | 27017 | Database for user authentication |
+| **Chat Backend** | 10000 | FastAPI (auth + chat + groups + projects) |
+| **MongoDB** | 27017 | Primary application database |
+
+Authentication is handled by FastAPI at `/auth`; there is no separate Node auth service.
 
 ## Quick Start
 
-### 1. Configure Environment Variables
+### 1. Configure environment variables
 
-Copy `.env.docker` to `.env` and fill in your API keys:
+Copy `.env.docker` to `.env` and update placeholders:
 
 ```bash
 cp .env.docker .env
 ```
 
-**Required values:**
-- `MONGODB_URI` - MongoDB connection string (use `mongodb://mongo:27017/miety_auth` for Docker)
-- `JWT_SECRET` - Secret key for JWT tokens
-- `HUGGINGFACEHUB_API_TOKEN` - Your HuggingFace API token
-- `PINECONE_API_KEY` - Your Pinecone API key
+Required values:
+- `JWT_SECRET`
+- `HUGGINGFACEHUB_API_TOKEN` or `OPENAI_API_KEY`
+- `PINECONE_API_KEY`
+- `MONGODB_URI` (defaults to `mongodb://mongo:27017/miety_ai`)
+- `MONGODB_DATABASE` (defaults to `miety_ai`)
 
-### 2. Build Knowledge Base (First Time Only)
-
-Before running Docker, you need to populate the Pinecone index:
+### 2. Build the knowledge base (first run)
 
 ```bash
-# Activate Python environment
-python -m venv myvenv
-source myvenv/Scripts/activate  # Windows: myvenv\Scripts\activate
-
-# Install dependencies
+python -m venv .venv
+.venv\Scripts\activate
 pip install -r requirements.txt
-
-# Run ingestion
 python run.py
 ```
 
-### 3. Start All Services
+### 3. Start all services
 
 ```bash
 docker-compose up --build
 ```
 
-### 4. Access the Application
+### 4. Open the app
 
-Open your browser to: **http://localhost:3000**
+Visit http://localhost:3000
 
-## Commands
+## Useful Commands
 
 ```bash
-# Start all services
+# Start in detached mode
 docker-compose up -d
 
-# View logs
+# Follow logs
 docker-compose logs -f
 
-# View specific service logs
+# Service-specific logs
 docker-compose logs -f frontend
-docker-compose logs -f auth-backend
 docker-compose logs -f chat-backend
+docker-compose logs -f mongo
 
-# Stop all services
+# Stop services
 docker-compose down
 
-# Stop and remove volumes (clears MongoDB data)
+# Stop and wipe Mongo volume
 docker-compose down -v
 
-# Rebuild a specific service
-docker-compose build auth-backend
-docker-compose up -d auth-backend
-
-# Run ingestion inside chat-backend container
+# Run ingestion inside backend container
 docker-compose exec chat-backend python run.py
 ```
 
-## Development Mode
-
-For active development, you may want to run services locally instead of in Docker:
+## Local Development (without Docker)
 
 ```bash
-# Terminal 1 - Auth Backend
-cd backend-auth
-npm run dev
-
-# Terminal 2 - Chat Backend
+# Terminal 1: backend
 python -m uvicorn app.main:app --reload --port 10000
 
-# Terminal 3 - Frontend
+# Terminal 2: frontend
 cd frontend
 npm run dev
 ```
 
-Make sure `frontend/vite.config.js` has the correct proxy settings:
-- `/auth` → `http://127.0.0.1:5000`
-- `/chat` → `http://127.0.0.1:10000`
+Expected Vite proxy targets:
+- `/auth` -> `http://127.0.0.1:10000`
+- `/chat` -> `http://127.0.0.1:10000`
+- `/api/groups` -> `http://127.0.0.1:10000`
+- `/api/projects` -> `http://127.0.0.1:10000`
 
 ## Troubleshooting
 
-### Registration fails
-- Check if auth-backend is running: `docker-compose ps`
-- Check MongoDB is connected: `docker-compose logs mongo`
-- Verify `MONGODB_URI` in `.env`
+### Frontend is up but auth/chat fails
+- Check backend health at `http://localhost:10000/health`
+- Confirm JWT/API keys in `.env`
+- Check backend logs: `docker-compose logs -f chat-backend`
 
-### Chat fails
-- Check if chat-backend is running
-- Verify `HUGGINGFACEHUB_API_TOKEN` and `PINECONE_API_KEY` are set
-- Check Pinecone index exists: `docker-compose logs chat-backend`
+### Database errors
+- Ensure Mongo is running: `docker-compose ps`
+- Verify `MONGODB_URI` and `MONGODB_DATABASE` values
 
-### Frontend shows blank page
-- Check nginx config: `docker-compose logs frontend`
-- Verify backend services are healthy
+### AI responses fail
+- Ensure at least one LLM credential is set: `HUGGINGFACEHUB_API_TOKEN` or `OPENAI_API_KEY`
+- Confirm Pinecone credentials/index are valid
 
-## Production Deployment
+## Production Notes
 
-For production:
-1. Change `JWT_SECRET` to a strong random value
-2. Use environment-specific `.env` files
-3. Consider using a managed MongoDB (MongoDB Atlas)
-4. Add SSL/TLS termination
-5. Set up proper logging and monitoring
+1. Set a strong `JWT_SECRET`
+2. Replace placeholder API tokens
+3. Use HTTPS termination (reverse proxy or managed platform)
+4. Restrict CORS to trusted origins
+5. Add monitoring, alerts, and structured log shipping

@@ -10,36 +10,126 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { io } from 'socket.io-client';
 import {
   ArrowLeft,
+  Bell,
+  BellOff,
+  BookmarkPlus,
+  ChevronRight,
+  Clock3,
   CircleAlert,
+  Download,
+  Flag,
+  Info,
+  Images,
+  ListPlus,
   Loader2,
   LogOut,
+  MoreVertical,
   MessageSquare,
+  Palette,
+  Phone,
   RefreshCw,
   Search,
   Sparkles,
+  Trash2,
   UserPlus,
-  Users,
+  Video,
   Wifi,
   WifiOff,
   X,
 } from 'lucide-react';
 
-import { AuthContext } from './context/auth-context';
+import { AuthContext } from './context/AuthContext';
 import { Header } from './components/Header';
 import { InputBar } from './components/InputBar';
+import { GroupDetailsScreen } from './components/groups/GroupDetailsScreen';
 import { GroupSidebar } from './components/groups/GroupSidebar';
 import { GroupMessageBubble } from './components/groups/GroupMessageBubble';
 import {
   addGroupMemberByEmail,
   createGroup,
+  deleteGroup,
   deleteGroupMessage,
   getGroup,
   getGroupMessages,
   leaveGroup,
   listGroups,
+  removeGroupMember,
   searchGroupMessages,
+  uploadGroupFiles,
+  updateGroup,
   updateGroupMessage,
 } from './utils/groupsApi';
+
+const SIDEBAR_STATE_KEY = 'miety-sidebar-open-desktop';
+const DISAPPEARING_OPTIONS = ['off', '24h', '7d'];
+const CHAT_THEME_OPTIONS = ['default', 'ocean', 'forest', 'dusk'];
+const CHAT_THEME_STYLES = {
+  default: {
+    shell: 'bg-card',
+    composer: 'bg-gradient-to-t from-card to-transparent',
+  },
+  ocean: {
+    shell: 'bg-sky-50/40 dark:bg-sky-950/25',
+    composer: 'bg-gradient-to-t from-sky-100/45 to-transparent dark:from-sky-900/20',
+  },
+  forest: {
+    shell: 'bg-emerald-50/35 dark:bg-emerald-950/20',
+    composer: 'bg-gradient-to-t from-emerald-100/45 to-transparent dark:from-emerald-900/20',
+  },
+  dusk: {
+    shell: 'bg-orange-50/35 dark:bg-orange-950/20',
+    composer: 'bg-gradient-to-t from-orange-100/45 to-transparent dark:from-orange-900/20',
+  },
+};
+
+function getInitialSidebarOpen() {
+  if (typeof window === 'undefined') {
+    return true;
+  }
+
+  const savedState = localStorage.getItem(SIDEBAR_STATE_KEY);
+  if (savedState !== null) {
+    return savedState === 'true';
+  }
+
+  return window.innerWidth >= 768;
+}
+
+function formatDisappearingMode(mode) {
+  if (mode === '24h') {
+    return '24 hours';
+  }
+
+  if (mode === '7d') {
+    return '7 days';
+  }
+
+  return 'Off';
+}
+
+function getDisappearingThreshold(mode) {
+  if (mode === '24h') {
+    return 24 * 60 * 60 * 1000;
+  }
+
+  if (mode === '7d') {
+    return 7 * 24 * 60 * 60 * 1000;
+  }
+
+  return 0;
+}
+
+function downloadTextFile(fileName, text) {
+  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
 
 function parseMemberIds(rawValue) {
   return rawValue
@@ -60,20 +150,6 @@ function formatConnectionStatus(status) {
       return 'Connection issue';
     default:
       return 'Offline';
-  }
-}
-
-function getStatusTone(status) {
-  switch (status) {
-    case 'connected':
-      return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20';
-    case 'connecting':
-    case 'reconnecting':
-      return 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20';
-    case 'error':
-      return 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20';
-    default:
-      return 'bg-muted/80 text-muted-foreground border-border';
   }
 }
 
@@ -126,6 +202,35 @@ function truncateText(value, limit = 120) {
   return `${value.slice(0, limit).trimEnd()}...`;
 }
 
+function getInitials(name) {
+  if (!name) {
+    return 'G';
+  }
+
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase();
+}
+
+function getAttachmentId(file, fallbackIndex = 0) {
+  return String(
+    file?.id ||
+    file?.file_id ||
+    file?.stored_name ||
+    file?.name ||
+    file?.filename ||
+    `attachment-${fallbackIndex}`
+  );
+}
+
+function getAttachmentName(file, fallbackIndex = 0) {
+  return String(file?.filename || file?.name || `Attachment ${fallbackIndex + 1}`);
+}
+
 export default function GroupChatApp() {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -137,7 +242,7 @@ export default function GroupChatApp() {
       (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)
     );
   });
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => getInitialSidebarOpen());
   const [groups, setGroups] = useState([]);
   const [groupsLoading, setGroupsLoading] = useState(true);
   const [groupsError, setGroupsError] = useState('');
@@ -150,10 +255,25 @@ export default function GroupChatApp() {
   const [searchResults, setSearchResults] = useState([]);
   const [isSearchMode, setIsSearchMode] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+  const [showHeaderSearch, setShowHeaderSearch] = useState(false);
+  const [isHeaderMenuOpen, setIsHeaderMenuOpen] = useState(false);
+  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
+  const [showGroupDetailsScreen, setShowGroupDetailsScreen] = useState(false);
+  const [detailsInitialTab, setDetailsInitialTab] = useState('media');
+  const [isMuted, setIsMuted] = useState(false);
+  const [isMediaVisible, setIsMediaVisible] = useState(true);
+  const [isChatLocked, setIsChatLocked] = useState(false);
+  const [disappearingMode, setDisappearingMode] = useState('off');
+  const [chatTheme, setChatTheme] = useState('default');
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [isShortcutAdded, setIsShortcutAdded] = useState(false);
+  const [isAddedToList, setIsAddedToList] = useState(false);
+  const [groupActionNotice, setGroupActionNotice] = useState('');
   const [groupActionError, setGroupActionError] = useState('');
   const [isLeavingGroup, setIsLeavingGroup] = useState(false);
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [isUploadingFiles, setIsUploadingFiles] = useState(false);
   const [socketStatus, setSocketStatus] = useState('offline');
   const [socketMessage, setSocketMessage] = useState('');
   const [typingMemberIds, setTypingMemberIds] = useState([]);
@@ -171,17 +291,21 @@ export default function GroupChatApp() {
   const [addFriendEmail, setAddFriendEmail] = useState('');
   const [addFriendError, setAddFriendError] = useState('');
   const [isAddingFriend, setIsAddingFriend] = useState(false);
+  const [selectedUploadFiles, setSelectedUploadFiles] = useState([]);
 
   const socketRef = useRef(null);
   const activeGroupIdRef = useRef(groupId || null);
   const typingTimerRef = useRef(null);
   const messagesEndRef = useRef(null);
+  const headerMenuRef = useRef(null);
+  const searchInputRef = useRef(null);
 
   const currentUserId = user?.id || user?._id || null;
   const memberList = useMemo(() => activeGroup?.members || [], [activeGroup?.members]);
   const currentUserRole = useMemo(() => {
     return memberList.find((member) => member.user_id === currentUserId)?.role || null;
   }, [memberList, currentUserId]);
+  const isAdmin = currentUserRole === 'admin';
   const canModerate = currentUserRole === 'admin' || currentUserRole === 'moderator';
   const messageMap = useMemo(() => {
     return new Map(messages.map((message) => [message.id, message]));
@@ -198,18 +322,61 @@ export default function GroupChatApp() {
   }, [isDarkMode]);
 
   useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth >= 768) {
+      localStorage.setItem(SIDEBAR_STATE_KEY, String(isSidebarOpen));
+    }
+  }, [isSidebarOpen]);
+
+  useEffect(() => {
     activeGroupIdRef.current = groupId || null;
   }, [groupId]);
 
   useEffect(() => {
     setComposerText('');
+    setSelectedUploadFiles([]);
     setReplyToMessage(null);
     setEditingMessage(null);
     setSearchQuery('');
     setSearchResults([]);
     setIsSearchMode(false);
+    setShowHeaderSearch(false);
+    setShowGroupDetailsScreen(false);
+    setDetailsInitialTab('media');
+    setIsHeaderMenuOpen(false);
+    setIsMoreMenuOpen(false);
+    setGroupActionNotice('');
     setGroupActionError('');
   }, [groupId]);
+
+  useEffect(() => {
+    if (!showHeaderSearch) {
+      return;
+    }
+
+    if (searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [showHeaderSearch]);
+
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (!headerMenuRef.current) {
+        return;
+      }
+
+      if (headerMenuRef.current.contains(event.target)) {
+        return;
+      }
+
+      setIsHeaderMenuOpen(false);
+      setIsMoreMenuOpen(false);
+    };
+
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+    };
+  }, []);
 
   const loadGroups = useCallback(async ({ skipRedirect = false } = {}) => {
     setGroupsLoading(true);
@@ -288,9 +455,6 @@ export default function GroupChatApp() {
 
   const handleSelectGroup = useCallback((selectedGroupId) => {
     navigate(`/groups/${selectedGroupId}`);
-    if (window.innerWidth < 768) {
-      setIsSidebarOpen(false);
-    }
   }, [navigate]);
 
   const handleCreateGroup = useCallback(async (event) => {
@@ -501,6 +665,267 @@ export default function GroupChatApp() {
     }
   }, [clearComposerMode, clearSearchResults, groupId, isLeavingGroup, navigate]);
 
+  const closeMenus = useCallback(() => {
+    setIsHeaderMenuOpen(false);
+    setIsMoreMenuOpen(false);
+  }, []);
+
+  const handlePrototypeAction = useCallback((label) => {
+    setGroupActionNotice(`${label} is available as a prototype in this demo.`);
+    closeMenus();
+  }, [closeMenus]);
+
+  const handleBackFromGroupChat = useCallback(() => {
+    if (window.history.length > 1) {
+      navigate(-1);
+      return;
+    }
+
+    navigate('/groups');
+  }, [navigate]);
+
+  const handleToggleMuteMessages = useCallback(() => {
+    setIsMuted((current) => {
+      const next = !current;
+      setGroupActionNotice(next ? 'Messages muted for this chat.' : 'Messages unmuted for this chat.');
+      return next;
+    });
+    closeMenus();
+  }, [closeMenus]);
+
+  const handleConfigureDisappearingMessages = useCallback(() => {
+    const selected = window.prompt(
+      'Set disappearing messages mode (off, 24h, 7d):',
+      disappearingMode
+    );
+
+    if (selected === null) {
+      return;
+    }
+
+    const normalized = selected.trim().toLowerCase();
+    if (!DISAPPEARING_OPTIONS.includes(normalized)) {
+      setGroupActionNotice('Invalid value. Choose off, 24h, or 7d.');
+      return;
+    }
+
+    setDisappearingMode(normalized);
+    setGroupActionNotice(`Disappearing messages set to ${formatDisappearingMode(normalized)}.`);
+    closeMenus();
+  }, [closeMenus, disappearingMode]);
+
+  const handleChatTheme = useCallback(() => {
+    const selected = window.prompt(
+      'Set chat theme (default, ocean, forest, dusk):',
+      chatTheme
+    );
+
+    if (selected === null) {
+      return;
+    }
+
+    const normalized = selected.trim().toLowerCase();
+    if (!CHAT_THEME_OPTIONS.includes(normalized)) {
+      setGroupActionNotice('Invalid theme. Choose default, ocean, forest, or dusk.');
+      return;
+    }
+
+    setChatTheme(normalized);
+    setGroupActionNotice(`Chat theme changed to ${normalized}.`);
+    closeMenus();
+  }, [chatTheme, closeMenus]);
+
+  const handleOpenSearch = useCallback(() => {
+    setShowHeaderSearch(true);
+    setGroupActionNotice('Search opened.');
+    closeMenus();
+  }, [closeMenus]);
+
+  const handleClearChat = useCallback(() => {
+    const isConfirmed = window.confirm('Clear all messages from this chat view?');
+    if (!isConfirmed) {
+      return;
+    }
+
+    setMessages([]);
+    setSearchResults([]);
+    setIsSearchMode(false);
+    setGroupActionNotice('Chat cleared locally.');
+    closeMenus();
+  }, [closeMenus]);
+
+  const handleExportChat = useCallback(() => {
+    if (!activeGroup) {
+      return;
+    }
+
+    const lines = messages.map((message) => {
+      const senderName = message.sender?.name || (message.type === 'ai_response' ? 'Miety AI' : 'Member');
+      const timestamp = message.created_at ? new Date(message.created_at).toLocaleString() : 'Unknown time';
+      return `[${timestamp}] ${senderName}:\n${message.content || ''}`;
+    });
+
+    const exportContent = `# ${activeGroup.name}\n\n${lines.length > 0 ? lines.join('\n\n') : 'No messages yet.'}`;
+    const fileName = `${activeGroup.name || 'group-chat'}-export.txt`
+      .toLowerCase()
+      .replace(/[^a-z0-9-]+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+
+    downloadTextFile(fileName || 'group-chat-export.txt', exportContent);
+    setGroupActionNotice('Chat exported successfully.');
+    closeMenus();
+  }, [activeGroup, closeMenus, messages]);
+
+  const handleToggleShortcut = useCallback(() => {
+    setIsShortcutAdded((current) => {
+      const next = !current;
+      setGroupActionNotice(next ? 'Shortcut added for this group.' : 'Shortcut removed for this group.');
+      return next;
+    });
+    closeMenus();
+  }, [closeMenus]);
+
+  const handleToggleList = useCallback(() => {
+    setIsAddedToList((current) => {
+      const next = !current;
+      setGroupActionNotice(next ? 'Group added to your list.' : 'Group removed from your list.');
+      return next;
+    });
+    closeMenus();
+  }, [closeMenus]);
+
+  const handleReportGroup = useCallback(() => {
+    const isConfirmed = window.confirm('Report this group for review?');
+    if (!isConfirmed) {
+      return;
+    }
+
+    setGroupActionNotice('Group reported. Our team will review it.');
+    closeMenus();
+  }, [closeMenus]);
+
+  const handleJumpToLatest = useCallback(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+    setGroupActionNotice('Jumped to latest messages.');
+  }, []);
+
+  const openGroupDetailsScreen = useCallback((initialTab = 'media') => {
+    setDetailsInitialTab(initialTab);
+    setShowGroupDetailsScreen(true);
+  }, []);
+
+  const handleManageStorage = useCallback(() => {
+    const contentSize = messages.reduce((total, message) => total + (message.content || '').length, 0);
+    const sizeInKb = Math.max(1, Math.round(contentSize / 1024));
+    setGroupActionNotice(`Approximate local chat footprint: ${sizeInKb} KB.`);
+  }, [messages]);
+
+  const handleToggleMediaVisibility = useCallback(() => {
+    setIsMediaVisible((current) => {
+      const next = !current;
+      setGroupActionNotice(next ? 'Media visibility enabled.' : 'Media visibility hidden.');
+      return next;
+    });
+  }, []);
+
+  const handleToggleChatLock = useCallback(() => {
+    setIsChatLocked((current) => {
+      const next = !current;
+      setGroupActionNotice(next ? 'Chat lock enabled.' : 'Chat lock disabled.');
+      return next;
+    });
+  }, []);
+
+  const handleToggleFavorite = useCallback(() => {
+    setIsFavorited((current) => {
+      const next = !current;
+      setGroupActionNotice(next ? 'Added to favorites.' : 'Removed from favorites.');
+      return next;
+    });
+  }, []);
+
+  const handleSaveGroupDescription = useCallback(async (nextDescription) => {
+    if (!groupId || !isAdmin) {
+      setGroupActionError('Only admins can edit group information.');
+      return;
+    }
+
+    try {
+      const updated = await updateGroup(groupId, { description: nextDescription });
+      setActiveGroup((current) => {
+        if (!current) {
+          return current;
+        }
+
+        return {
+          ...current,
+          description: updated?.description ?? nextDescription,
+          updated_at: updated?.updated_at || current.updated_at,
+        };
+      });
+      setGroupActionNotice('Group description updated.');
+      await loadGroups({ skipRedirect: true });
+    } catch (error) {
+      console.error(error);
+      const detail = error?.response?.data?.detail;
+      setGroupActionError(typeof detail === 'string' ? detail : 'Unable to update group description.');
+      throw error;
+    }
+  }, [groupId, isAdmin, loadGroups]);
+
+  const handleRemoveMemberFromGroup = useCallback(async (memberUserId) => {
+    if (!groupId || !isAdmin) {
+      setGroupActionError('Only admins can remove members.');
+      return;
+    }
+
+    try {
+      await removeGroupMember(groupId, memberUserId);
+      await Promise.all([
+        refreshActiveGroup(),
+        loadGroups({ skipRedirect: true }),
+      ]);
+      setGroupActionNotice('Member removed from group.');
+    } catch (error) {
+      console.error(error);
+      const detail = error?.response?.data?.detail;
+      setGroupActionError(typeof detail === 'string' ? detail : 'Unable to remove this member.');
+      throw error;
+    }
+  }, [groupId, isAdmin, loadGroups, refreshActiveGroup]);
+
+  const handleDeleteCurrentGroup = useCallback(async () => {
+    if (!groupId || !isAdmin) {
+      setGroupActionError('Only admins can delete this group.');
+      return;
+    }
+
+    const isConfirmed = window.confirm('Delete this group permanently? This cannot be undone.');
+    if (!isConfirmed) {
+      return;
+    }
+
+    try {
+      await deleteGroup(groupId);
+      const remainingGroups = await listGroups();
+      setGroups(remainingGroups);
+      setShowGroupDetailsScreen(false);
+
+      if (remainingGroups.length > 0) {
+        navigate(`/groups/${remainingGroups[0].id}`, { replace: true });
+      } else {
+        navigate('/groups', { replace: true });
+      }
+    } catch (error) {
+      console.error(error);
+      const detail = error?.response?.data?.detail;
+      setGroupActionError(typeof detail === 'string' ? detail : 'Unable to delete this group.');
+    }
+  }, [groupId, isAdmin, navigate]);
+
   const handleSendMessage = useCallback(async (content) => {
     if (!groupId) {
       setGroupActionError('Select a group first.');
@@ -512,8 +937,14 @@ export default function GroupChatApp() {
     if (editingMessage) {
       setIsSending(true);
 
+      const attachedNames = selectedUploadFiles.map((file, index) => getAttachmentName(file, index));
+      const attachedFileBlock = attachedNames.length > 0
+        ? `\n\nAttached files:\n${attachedNames.map((name) => `- ${name}`).join('\n')}`
+        : '';
+      const outboundContent = `${content}${attachedFileBlock}`;
+
       try {
-        const updatedMessage = await updateGroupMessage(groupId, editingMessage.id, content);
+        const updatedMessage = await updateGroupMessage(groupId, editingMessage.id, outboundContent);
 
         setMessages((currentMessages) => upsertMessage(currentMessages, updatedMessage));
         setSearchResults((currentResults) => currentResults.map((currentMessage) => {
@@ -525,6 +956,7 @@ export default function GroupChatApp() {
 
         setEditingMessage(null);
         setComposerText('');
+        setSelectedUploadFiles([]);
         return true;
       } catch (error) {
         console.error(error);
@@ -545,16 +977,43 @@ export default function GroupChatApp() {
 
     setSocketMessage('');
     setIsSending(true);
+
+    const attachments = selectedUploadFiles.map((file, index) => ({
+      id: getAttachmentId(file, index),
+      file_id: file.id || file.file_id || null,
+      filename: getAttachmentName(file, index),
+      content_type: file.content_type || file.type || 'application/octet-stream',
+      size_bytes: Number(file.size_bytes || file.size || 0),
+      preview_text: String(file.preview_text || ''),
+    }));
+    const attachedDetails = attachments
+      .map((file) => {
+        if (!file.preview_text) {
+          return `- ${file.filename}`;
+        }
+
+        return `- ${file.filename}: ${file.preview_text}`;
+      })
+      .join('\n');
+
+    const attachedFileBlock = attachments.length > 0
+      ? `\n\nAttached files:\n${attachedDetails}`
+      : '';
+    const outboundContent = `${content}${attachedFileBlock}`;
+
     socket.emit('send_message', {
       group_id: groupId,
-      content,
-      message_type: 'text',
+      content: outboundContent,
+      message_type: attachments.length > 0 ? 'file' : 'text',
       reply_to_id: replyToMessage?.id,
-      metadata: {},
+      metadata: {
+        attachments,
+      },
     });
     setReplyToMessage(null);
+    setSelectedUploadFiles([]);
     return true;
-  }, [editingMessage, groupId, replyToMessage, socketStatus]);
+  }, [editingMessage, groupId, replyToMessage, selectedUploadFiles, socketStatus]);
 
   useEffect(() => {
     loadGroups();
@@ -733,148 +1192,383 @@ export default function GroupChatApp() {
       .map((memberId) => memberList.find((member) => member.user_id === memberId)?.name || 'Someone')
       .filter(Boolean);
   }, [memberList, typingMemberIds]);
+  const groupAttachedFiles = useMemo(() => {
+    return selectedUploadFiles.map((file, index) => ({
+      id: getAttachmentId(file, index),
+      name: getAttachmentName(file, index),
+    }));
+  }, [selectedUploadFiles]);
+
+  const handleAddGroupFiles = useCallback(async (pickedFiles) => {
+    if (!groupId) {
+      setGroupActionError('Select a group first.');
+      return;
+    }
+
+    setIsUploadingFiles(true);
+    setGroupActionError('');
+
+    try {
+      const uploadedFiles = await uploadGroupFiles(groupId, pickedFiles);
+      setSelectedUploadFiles((currentFiles) => {
+        const nextById = new Map(
+          currentFiles.map((file, index) => [getAttachmentId(file, index), file])
+        );
+        uploadedFiles.forEach((file, index) => {
+          nextById.set(getAttachmentId(file, index), file);
+        });
+        return Array.from(nextById.values());
+      });
+      setGroupActionNotice(`${uploadedFiles.length} file${uploadedFiles.length === 1 ? '' : 's'} uploaded.`);
+    } catch (error) {
+      console.error(error);
+      const detail = error?.response?.data?.detail;
+      setGroupActionError(typeof detail === 'string' ? detail : 'Failed to upload file attachments.');
+    } finally {
+      setIsUploadingFiles(false);
+    }
+  }, [groupId]);
+
+  const handleRemoveGroupFile = useCallback((selectedFile) => {
+    const targetId = getAttachmentId(selectedFile);
+    setSelectedUploadFiles((currentFiles) => {
+      return currentFiles.filter((file, index) => getAttachmentId(file, index) !== targetId);
+    });
+  }, []);
+
+  const { groupMediaItems, groupLinkItems, groupDocumentItems } = useMemo(() => {
+    const urlPattern = /(https?:\/\/[^\s)]+)/gi;
+    const mediaPattern = /\.(png|jpe?g|gif|webp|mp4|mov|mkv)(\?.*)?$/i;
+    const documentPattern = /\.(pdf|docx?|pptx?|xlsx?|txt|csv)(\?.*)?$/i;
+
+    const seen = new Set();
+    const media = [];
+    const links = [];
+    const documents = [];
+
+    messages.forEach((message) => {
+      const content = String(message.content || '');
+      const matches = content.match(urlPattern) || [];
+
+      matches.forEach((url) => {
+        if (seen.has(url)) {
+          return;
+        }
+
+        seen.add(url);
+        const item = {
+          url,
+          sender: message.sender?.name || 'Member',
+          created_at: message.created_at || null,
+        };
+
+        if (mediaPattern.test(url)) {
+          media.push(item);
+          return;
+        }
+
+        if (documentPattern.test(url)) {
+          documents.push(item);
+          return;
+        }
+
+        links.push(item);
+      });
+    });
+
+    return {
+      groupMediaItems: media,
+      groupLinkItems: links,
+      groupDocumentItems: documents,
+    };
+  }, [messages]);
 
   const normalizedSearchQuery = searchQuery.trim();
-  const displayedMessages = isSearchMode ? searchResults : messages;
+  const displayedMessages = useMemo(() => {
+    const sourceMessages = isSearchMode ? searchResults : messages;
+    const threshold = getDisappearingThreshold(disappearingMode);
+
+    if (!threshold) {
+      return sourceMessages;
+    }
+
+    const cutoff = Date.now() - threshold;
+    return sourceMessages.filter((message) => {
+      const messageTime = message?.created_at ? new Date(message.created_at).getTime() : Number.NaN;
+      return Number.isNaN(messageTime) || messageTime >= cutoff;
+    });
+  }, [disappearingMode, isSearchMode, messages, searchResults]);
+
+  const activeThemeStyles = CHAT_THEME_STYLES[chatTheme] || CHAT_THEME_STYLES.default;
 
   const connectionLabel = formatConnectionStatus(socketStatus);
 
   const activeGroupSummary = activeGroup ? (
-    <div className="rounded-3xl border border-border bg-card/80 px-5 py-4 shadow-sm backdrop-blur">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-3">
-            <h1 className="truncate text-2xl font-semibold text-foreground">{activeGroup.name}</h1>
-            {activeGroup.is_ai_enabled && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                <Sparkles size={12} />
-                AI enabled
-              </span>
+    <div className="rounded-2xl border border-border bg-card/90 px-3 py-2 shadow-sm">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          <button
+            type="button"
+            onClick={handleBackFromGroupChat}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border bg-background/80 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            aria-label="Back"
+            title="Back"
+          >
+            <ArrowLeft size={16} />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => openGroupDetailsScreen('media')}
+            className="flex min-w-0 items-center gap-2 rounded-xl px-1.5 py-1 text-left transition-colors hover:bg-muted/50"
+            title="Open group details"
+          >
+            {activeGroup.avatar_url ? (
+              <img
+                src={activeGroup.avatar_url}
+                alt={activeGroup.name}
+                className="h-9 w-9 rounded-full border border-border object-cover"
+              />
+            ) : (
+              <div className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-muted text-xs font-semibold text-foreground">
+                {getInitials(activeGroup.name)}
+              </div>
             )}
-            {activeGroup.ai_auto_respond && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-                Auto respond
-              </span>
-            )}
-          </div>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-            {activeGroup.description || 'A focused room for classmates, project teammates, and study groups.'}
-          </p>
+
+            <div className="min-w-0">
+              <h1 className="truncate text-sm font-semibold text-foreground">{activeGroup.name}</h1>
+              <div className="mt-0.5 flex flex-wrap items-center gap-1 text-[11px] text-muted-foreground">
+                <span className="inline-flex items-center gap-1">
+                  {socketStatus === 'connected' ? <Wifi size={12} /> : <WifiOff size={12} />}
+                  {connectionLabel}
+                </span>
+                <span>•</span>
+                <span>{memberList.length} members</span>
+                {isMuted && (
+                  <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium">
+                    Muted
+                  </span>
+                )}
+                {disappearingMode !== 'off' && (
+                  <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-600 dark:text-amber-400">
+                    Disappears {formatDisappearingMode(disappearingMode)}
+                  </span>
+                )}
+              </div>
+            </div>
+          </button>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium ${getStatusTone(socketStatus)}`}>
-            {socketStatus === 'connected' ? <Wifi size={14} /> : <WifiOff size={14} />}
-            {connectionLabel}
-          </div>
+        <div className="flex items-center gap-1" ref={headerMenuRef}>
+          <button
+            type="button"
+            onClick={() => handlePrototypeAction('Video call')}
+            className="inline-flex items-center justify-center rounded-full border border-border p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            aria-label="Video call"
+            title="Video call (Prototype)"
+          >
+            <Video size={14} />
+          </button>
 
-          {canModerate && (
-            <button
-              type="button"
-              onClick={() => {
-                setAddFriendError('');
-                setShowAddFriendModal(true);
-              }}
-              className="inline-flex items-center gap-2 rounded-full border border-border bg-muted/40 px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
-            >
-              <UserPlus size={14} />
-              Add friend
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => handlePrototypeAction('Voice call')}
+            className="inline-flex items-center justify-center rounded-full border border-border p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            aria-label="Voice call"
+            title="Voice call (Prototype)"
+          >
+            <Phone size={14} />
+          </button>
+
+          <button
+            type="button"
+            onClick={handleJumpToLatest}
+            className="inline-flex items-center justify-center rounded-full border border-border p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            aria-label="Message shortcut"
+            title="Jump to latest messages"
+          >
+            <MessageSquare size={14} />
+          </button>
 
           <button
             type="button"
             onClick={() => {
-              refreshActiveGroup();
-              refreshMessages();
+              setIsHeaderMenuOpen((current) => {
+                const next = !current;
+                if (!next) {
+                  setIsMoreMenuOpen(false);
+                }
+                return next;
+              });
             }}
-            className="inline-flex items-center gap-2 rounded-full border border-border bg-muted/40 px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+            className="inline-flex items-center justify-center rounded-full border border-border p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            aria-label="Open group options"
+            title="More options"
           >
-            <RefreshCw size={14} className={isSearching ? 'animate-spin' : ''} />
-            Refresh
+            <MoreVertical size={14} />
           </button>
 
-          <button
-            type="button"
-            onClick={handleLeaveCurrentGroup}
-            disabled={isLeavingGroup}
-            className="inline-flex items-center gap-2 rounded-full border border-red-500/20 bg-red-500/10 px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-500/15 disabled:opacity-60 dark:text-red-400"
-          >
-            {isLeavingGroup ? <Loader2 size={14} className="animate-spin" /> : <LogOut size={14} />}
-            {isLeavingGroup ? 'Leaving...' : 'Leave group'}
-          </button>
+          {isHeaderMenuOpen && (
+            <div className="absolute right-0 top-11 z-50 w-64 animate-fade-in rounded-2xl border border-border bg-popover/95 p-1.5 shadow-xl backdrop-blur">
+              {!isMoreMenuOpen ? (
+                <div className="space-y-1">
+                  <MenuEntryButton
+                    icon={UserPlus}
+                    label="Add Member"
+                    onClick={() => {
+                      if (!isAdmin) {
+                        setGroupActionNotice('Only admins can add members.');
+                        closeMenus();
+                        return;
+                      }
+                      setAddFriendError('');
+                      setShowAddFriendModal(true);
+                      closeMenus();
+                    }}
+                  />
+                  <MenuEntryButton
+                    icon={Info}
+                    label="Group Information"
+                    onClick={() => {
+                      openGroupDetailsScreen('media');
+                      closeMenus();
+                    }}
+                  />
+                  <MenuEntryButton
+                    icon={Images}
+                    label="Group Media"
+                    onClick={() => {
+                      openGroupDetailsScreen('media');
+                      closeMenus();
+                    }}
+                  />
+                  <MenuEntryButton
+                    icon={isMuted ? Bell : BellOff}
+                    label={isMuted ? 'Unmute Messages' : 'Mute Messages'}
+                    onClick={handleToggleMuteMessages}
+                  />
+                  <MenuEntryButton
+                    icon={Clock3}
+                    label={`Disappearing Messages (${formatDisappearingMode(disappearingMode)})`}
+                    onClick={handleConfigureDisappearingMessages}
+                  />
+                  <MenuEntryButton
+                    icon={Palette}
+                    label={`Chat Theme (${chatTheme})`}
+                    onClick={handleChatTheme}
+                  />
+                  <MenuEntryButton
+                    icon={Search}
+                    label="Search"
+                    onClick={handleOpenSearch}
+                  />
+                  <MenuEntryButton
+                    icon={ChevronRight}
+                    label="More"
+                    onClick={() => setIsMoreMenuOpen(true)}
+                  />
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  <button
+                    type="button"
+                    onClick={() => setIsMoreMenuOpen(false)}
+                    className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-medium text-foreground transition-colors hover:bg-muted/70"
+                  >
+                    <ArrowLeft size={14} />
+                    Back
+                  </button>
+
+                  <MenuEntryButton icon={Trash2} label="Clear Chat" onClick={handleClearChat} />
+                  <MenuEntryButton icon={Download} label="Export Chat" onClick={handleExportChat} />
+                  <MenuEntryButton
+                    icon={Clock3}
+                    label="Disappearing Messages"
+                    onClick={handleConfigureDisappearingMessages}
+                  />
+                  <MenuEntryButton
+                    icon={BookmarkPlus}
+                    label={isShortcutAdded ? 'Remove Shortcut' : 'Add Shortcut'}
+                    onClick={handleToggleShortcut}
+                  />
+                  <MenuEntryButton
+                    icon={ListPlus}
+                    label={isAddedToList ? 'Remove from List' : 'Add to List'}
+                    onClick={handleToggleList}
+                  />
+                  <MenuEntryButton
+                    icon={LogOut}
+                    label="Exit Group"
+                    onClick={() => {
+                      closeMenus();
+                      handleLeaveCurrentGroup();
+                    }}
+                    destructive
+                  />
+                  <MenuEntryButton
+                    icon={Flag}
+                    label="Report Group"
+                    onClick={handleReportGroup}
+                    destructive
+                  />
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-2">
-        <div className="inline-flex items-center gap-2 rounded-full bg-muted/60 px-3 py-1.5 text-xs text-muted-foreground">
-          <Users size={14} />
-          {memberList.length} members
-        </div>
-        {memberList.slice(0, 5).map((member) => (
-          <span
-            key={member.user_id}
-            className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs text-foreground"
-          >
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-[10px] font-semibold text-primary">
-              {(member.name || 'U').slice(0, 1).toUpperCase()}
-            </span>
-            {member.name}
-          </span>
-        ))}
-      </div>
+      {(showHeaderSearch || isSearchMode) && (
+        <form onSubmit={handleSearchMessages} className="mt-2 flex flex-wrap items-center gap-2">
+          <div className="relative min-w-[200px] flex-1">
+            <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <input
+              ref={searchInputRef}
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              className="w-full rounded-full border border-border bg-muted/30 py-1.5 pl-8 pr-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary"
+              placeholder="Search messages"
+            />
+          </div>
 
-      <form onSubmit={handleSearchMessages} className="mt-4 flex flex-wrap items-center gap-2">
-        <div className="relative min-w-[220px] flex-1">
-          <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <input
-            value={searchQuery}
-            onChange={(event) => setSearchQuery(event.target.value)}
-            className="w-full rounded-full border border-border bg-muted/30 py-2 pl-9 pr-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary"
-            placeholder="Search messages in this group"
-          />
-        </div>
-
-        <button
-          type="submit"
-          disabled={!normalizedSearchQuery || isSearching}
-          className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {isSearching ? <Loader2 size={14} className="animate-spin" /> : <Search size={14} />}
-          {isSearching ? 'Searching...' : 'Search'}
-        </button>
-
-        {isSearchMode && (
           <button
-            type="button"
-            onClick={clearSearchResults}
-            className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            type="submit"
+            disabled={!normalizedSearchQuery || isSearching}
+            className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
           >
-            <X size={14} />
-            Clear
+            {isSearching ? <Loader2 size={13} className="animate-spin" /> : <Search size={13} />}
+            {isSearching ? 'Searching...' : 'Search'}
           </button>
-        )}
-      </form>
+
+          {isSearchMode && (
+            <button
+              type="button"
+              onClick={clearSearchResults}
+              className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <X size={13} />
+              Clear
+            </button>
+          )}
+        </form>
+      )}
 
       {isSearchMode && (
-        <p className="mt-2 text-xs text-muted-foreground">
+        <p className="mt-1 text-[11px] text-muted-foreground">
           Showing {searchResults.length} result{searchResults.length === 1 ? '' : 's'} for &quot;{normalizedSearchQuery}&quot;.
         </p>
       )}
+
+      {groupActionNotice && (
+        <p className="mt-1 text-[11px] text-foreground/70">{groupActionNotice}</p>
+      )}
     </div>
   ) : (
-    <div className="rounded-3xl border border-dashed border-border bg-card/60 px-5 py-6">
-      <div className="flex items-start gap-4">
-        <div className="rounded-2xl bg-primary/10 p-3 text-primary">
-          <MessageSquare size={20} />
-        </div>
-        <div>
-          <h1 className="text-2xl font-semibold text-foreground">Your group rooms</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-            Pick a room from the sidebar or create a new one for your class project, discussion circle, or study plan.
-          </p>
-        </div>
-      </div>
+    <div className="rounded-2xl border border-dashed border-border bg-card/60 px-4 py-3">
+      <p className="text-sm font-medium text-foreground">Select a group to start chatting</p>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Choose a room from the sidebar or create a new group.
+      </p>
     </div>
   );
 
@@ -898,7 +1592,7 @@ export default function GroupChatApp() {
           title="Group Rooms"
         />
 
-        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden p-4 md:p-5">
+        <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden p-3 md:p-4">
           {groupsError && (
             <div className="flex items-center gap-3 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-600 dark:text-red-400">
               <CircleAlert size={16} />
@@ -922,7 +1616,7 @@ export default function GroupChatApp() {
 
           {activeGroupSummary}
 
-          <div className="min-h-0 flex-1 overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
+          <div className={`min-h-0 flex-1 overflow-hidden rounded-3xl border border-border shadow-sm ${activeThemeStyles.shell}`}>
             {groupId ? (
               <div className="flex h-full flex-col">
                 <GroupMessagesList
@@ -941,7 +1635,7 @@ export default function GroupChatApp() {
                   endRef={messagesEndRef}
                 />
 
-                <div className="border-t border-border bg-gradient-to-t from-card to-transparent p-4">
+                <div className={`border-t border-border px-4 pb-4 pt-5 ${activeThemeStyles.composer}`}>
                   {(replyToMessage || editingMessage) && (
                     <div className="mx-auto mb-3 flex w-full max-w-3xl items-start justify-between gap-3 rounded-2xl border border-border bg-muted/35 px-4 py-3 text-sm">
                       <div className="min-w-0">
@@ -966,17 +1660,22 @@ export default function GroupChatApp() {
 
                   <InputBar
                     onSendMessage={handleSendMessage}
-                    isProcessing={isSending || socketStatus !== 'connected'}
+                    isProcessing={isSending || isUploadingFiles || socketStatus !== 'connected'}
                     placeholder={activeGroup ? `Message ${activeGroup.name}` : 'Type a message'}
                     helperText={
                       editingMessage
                         ? 'Editing mode: send to save changes.'
+                        : selectedUploadFiles.length > 0
+                        ? `Attached: ${selectedUploadFiles.slice(0, 2).map((file, index) => getAttachmentName(file, index)).join(', ')}${selectedUploadFiles.length > 2 ? ` +${selectedUploadFiles.length - 2} more` : ''}`
                         : socketStatus === 'connected'
-                        ? 'Press Enter to send. Shift+Enter adds a new line.'
+                        ? ''
                         : 'Waiting for a real-time connection.'
                     }
                     value={composerText}
                     onValueChange={setComposerText}
+                    onFilesSelected={handleAddGroupFiles}
+                    selectedFiles={groupAttachedFiles}
+                    onRemoveSelectedFile={handleRemoveGroupFile}
                   />
                 </div>
               </div>
@@ -990,6 +1689,54 @@ export default function GroupChatApp() {
           </div>
         </div>
       </main>
+
+      <GroupDetailsScreen
+        isOpen={showGroupDetailsScreen && Boolean(activeGroup)}
+        onClose={() => setShowGroupDetailsScreen(false)}
+        group={activeGroup}
+        members={memberList}
+        currentUserId={currentUserId}
+        isAdmin={isAdmin}
+        onAudioCall={() => handlePrototypeAction('Audio call')}
+        onVideoCall={() => handlePrototypeAction('Video call')}
+        onAddMember={() => {
+          if (!isAdmin) {
+            setGroupActionNotice('Only admins can add members.');
+            return;
+          }
+          setAddFriendError('');
+          setShowAddFriendModal(true);
+        }}
+        onSearchInChat={() => {
+          setShowHeaderSearch(true);
+          setShowGroupDetailsScreen(false);
+        }}
+        onSaveDescription={handleSaveGroupDescription}
+        mediaItems={groupMediaItems}
+        linkItems={groupLinkItems}
+        documentItems={groupDocumentItems}
+        onManageStorage={handleManageStorage}
+        isMuted={isMuted}
+        onToggleMute={handleToggleMuteMessages}
+        mediaVisibility={isMediaVisible}
+        onToggleMediaVisibility={handleToggleMediaVisibility}
+        chatLockEnabled={isChatLocked}
+        onToggleChatLock={handleToggleChatLock}
+        isFavorited={isFavorited}
+        onToggleFavorite={handleToggleFavorite}
+        isAddedToList={isAddedToList}
+        onToggleAddToList={handleToggleList}
+        onClearChat={handleClearChat}
+        onExitGroup={handleLeaveCurrentGroup}
+        onDeleteGroup={handleDeleteCurrentGroup}
+        onReportGroup={handleReportGroup}
+        onConfigureDisappearingMessages={handleConfigureDisappearingMessages}
+        onConfigureTheme={handleChatTheme}
+        disappearingMode={formatDisappearingMode(disappearingMode)}
+        chatTheme={chatTheme}
+        onRemoveMember={handleRemoveMemberFromGroup}
+        initialContentTab={detailsInitialTab}
+      />
 
       {showCreateModal && (
         <CreateGroupModal
@@ -1150,6 +1897,23 @@ function EmptyGroupState({ isLoading, onCreateGroup, onGoBack }) {
         </button>
       </div>
     </div>
+  );
+}
+
+function MenuEntryButton({ icon: Icon, label, onClick, destructive = false }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm transition-colors ${
+        destructive
+          ? 'text-red-600 hover:bg-red-500/10 dark:text-red-400'
+          : 'text-foreground hover:bg-muted/70'
+      }`}
+    >
+      <Icon size={14} className="shrink-0" />
+      <span className="truncate">{label}</span>
+    </button>
   );
 }
 

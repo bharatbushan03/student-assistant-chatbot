@@ -1,6 +1,8 @@
-import React from 'react';
-import { Plus, MessageSquare, Trash2, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { ChevronDown, ChevronUp, FolderKanban, MessageSquare, Plus, Trash2, Users, X } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { listProjects } from '../utils/projectsApi';
+import { listGroups } from '../utils/groupsApi';
 
 export function Sidebar({
   isOpen,
@@ -13,7 +15,65 @@ export function Sidebar({
 }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const [projects, setProjects] = useState([]);
+  const [groups, setGroups] = useState([]);
+  const [isLoadingCollections, setIsLoadingCollections] = useState(true);
+  const [expandedSections, setExpandedSections] = useState({
+    chats: true,
+    projects: true,
+    groups: true,
+  });
+
+  const isChatView = location.pathname === '/';
+  const isProjectView = location.pathname.startsWith('/projects');
   const isGroupView = location.pathname.startsWith('/groups');
+  const pathParts = location.pathname.split('/').filter(Boolean);
+  const activeProjectId = pathParts[0] === 'projects' ? pathParts[1] : null;
+  const activeGroupId = pathParts[0] === 'groups' ? pathParts[1] : null;
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadCollections = async () => {
+      setIsLoadingCollections(true);
+      try {
+        const [projectsResponse, groupsResponse] = await Promise.all([
+          listProjects(),
+          listGroups(),
+        ]);
+
+        if (!isMounted) {
+          return;
+        }
+
+        setProjects(projectsResponse || []);
+        setGroups(groupsResponse || []);
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+        setProjects([]);
+        setGroups([]);
+      } finally {
+        if (isMounted) {
+          setIsLoadingCollections(false);
+        }
+      }
+    };
+
+    loadCollections();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const toggleSection = (sectionKey) => {
+    setExpandedSections((previous) => ({
+      ...previous,
+      [sectionKey]: !previous[sectionKey],
+    }));
+  };
 
   return (
     <>
@@ -37,40 +97,9 @@ export function Sidebar({
         `}
       >
         {/* Header */}
-        <div className="p-4 border-b border-border">
-          <div className="grid grid-cols-2 gap-2 mb-3">
-            <button
-              type="button"
-              onClick={() => {
-                navigate('/');
-                if (window.innerWidth < 768) {
-                  setIsOpen(false);
-                }
-              }}
-              className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                !isGroupView
-                  ? 'bg-foreground text-background'
-                  : 'bg-muted text-foreground hover:bg-muted/80'
-              }`}
-            >
-              Chats
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                navigate('/groups');
-                if (window.innerWidth < 768) {
-                  setIsOpen(false);
-                }
-              }}
-              className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                isGroupView
-                  ? 'bg-foreground text-background'
-                  : 'bg-muted text-foreground hover:bg-muted/80'
-              }`}
-            >
-              Groups
-            </button>
+        <div className="border-b border-border p-4">
+          <div className="mb-3 px-1 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+            Workspace
           </div>
 
           <button
@@ -85,48 +114,174 @@ export function Sidebar({
           </button>
         </div>
 
-        {/* Chat list */}
-        <div className="flex-1 overflow-y-auto px-3 py-3 space-y-1">
-          <div className="mb-2 px-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-            Recent Chats
-          </div>
-          {chats.map((chat) => (
-            <div
-              key={chat.id}
-              onClick={() => onSelectChat(chat.id)}
-              className={`
-                group flex items-center justify-between
-                px-3 py-2.5 rounded-lg cursor-pointer border
-                transition-all text-sm
-                ${activeChatId === chat.id
-                  ? 'border-foreground/20 bg-foreground/[0.06] text-foreground font-medium shadow-sm'
-                  : 'border-transparent text-muted-foreground hover:bg-muted/70 hover:text-foreground'
-                }
-              `}
-            >
-              <div className="flex items-center gap-2.5 overflow-hidden flex-1">
-                <MessageSquare size={16} className="shrink-0 opacity-70" />
-                <span className="truncate">{chat.title}</span>
-              </div>
+        <div className="flex-1 space-y-3 overflow-y-auto px-3 py-3">
+          <section className="rounded-lg border border-border/70 bg-muted/20">
+            <div className="flex items-center justify-between px-2 py-2">
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDeleteChat(chat.id);
-                }}
-                className="opacity-0 group-hover:opacity-100
-                  p-1 rounded-md hover:bg-destructive/10 hover:text-destructive
-                  transition-all"
-                aria-label="Delete chat"
+                type="button"
+                onClick={() => navigate('/')}
+                className={`flex flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium transition-colors ${
+                  isChatView
+                    ? 'bg-foreground text-background'
+                    : 'text-foreground hover:bg-muted/70'
+                }`}
               >
-                <Trash2 size={14} />
+                <MessageSquare size={15} />
+                <span>Chats</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => toggleSection('chats')}
+                className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
+                aria-label={expandedSections.chats ? 'Hide chats' : 'Show chats'}
+              >
+                {expandedSections.chats ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
               </button>
             </div>
-          ))}
-          {chats.length === 0 && (
-            <div className="text-center text-sm text-muted-foreground py-8 px-4">
-              <MessageSquare size={32} className="mx-auto mb-2 opacity-30" />
-              <p>No chats yet</p>
-              <p className="text-xs mt-1">Start a conversation!</p>
+
+            {expandedSections.chats && (
+              <div className="space-y-1 px-2 pb-2">
+                {chats.map((chat) => (
+                  <div
+                    key={chat.id}
+                    onClick={() => onSelectChat(chat.id)}
+                    className={`
+                      group flex cursor-pointer items-center justify-between rounded-md border px-2.5 py-2 text-sm transition-all
+                      ${activeChatId === chat.id
+                        ? 'border-foreground/20 bg-foreground/[0.06] text-foreground font-medium'
+                        : 'border-transparent text-muted-foreground hover:bg-muted/70 hover:text-foreground'
+                      }
+                    `}
+                  >
+                    <div className="flex flex-1 items-center gap-2 overflow-hidden">
+                      <MessageSquare size={14} className="shrink-0 opacity-70" />
+                      <span className="truncate">{chat.title}</span>
+                    </div>
+                    <button
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onDeleteChat(chat.id);
+                      }}
+                      className="rounded-md p-1 opacity-0 transition-all hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
+                      aria-label="Delete chat"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                ))}
+
+                {chats.length === 0 && (
+                  <p className="px-2 py-2 text-xs text-muted-foreground">No chats yet.</p>
+                )}
+              </div>
+            )}
+          </section>
+
+          <section className="rounded-lg border border-border/70 bg-muted/20">
+            <div className="flex items-center justify-between px-2 py-2">
+              <button
+                type="button"
+                onClick={() => navigate('/projects')}
+                className={`flex flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium transition-colors ${
+                  isProjectView
+                    ? 'bg-foreground text-background'
+                    : 'text-foreground hover:bg-muted/70'
+                }`}
+              >
+                <FolderKanban size={15} />
+                <span>Projects</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => toggleSection('projects')}
+                className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
+                aria-label={expandedSections.projects ? 'Hide projects' : 'Show projects'}
+              >
+                {expandedSections.projects ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+              </button>
+            </div>
+
+            {expandedSections.projects && (
+              <div className="space-y-1 px-2 pb-2">
+                {isLoadingCollections ? (
+                  <p className="px-2 py-2 text-xs text-muted-foreground">Loading projects...</p>
+                ) : projects.length > 0 ? (
+                  projects.map((project) => (
+                    <button
+                      key={project.id}
+                      type="button"
+                      onClick={() => navigate(`/projects/${project.id}`)}
+                      className={`flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm transition-colors ${
+                        activeProjectId === project.id
+                          ? 'bg-foreground/[0.08] text-foreground font-medium'
+                          : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground'
+                      }`}
+                    >
+                      <FolderKanban size={14} className="shrink-0 opacity-75" />
+                      <span className="truncate">{project.name}</span>
+                    </button>
+                  ))
+                ) : (
+                  <p className="px-2 py-2 text-xs text-muted-foreground">No projects yet.</p>
+                )}
+              </div>
+            )}
+          </section>
+
+          <section className="rounded-lg border border-border/70 bg-muted/20">
+            <div className="flex items-center justify-between px-2 py-2">
+              <button
+                type="button"
+                onClick={() => navigate('/groups')}
+                className={`flex flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium transition-colors ${
+                  isGroupView
+                    ? 'bg-foreground text-background'
+                    : 'text-foreground hover:bg-muted/70'
+                }`}
+              >
+                <Users size={15} />
+                <span>Groups</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => toggleSection('groups')}
+                className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
+                aria-label={expandedSections.groups ? 'Hide groups' : 'Show groups'}
+              >
+                {expandedSections.groups ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+              </button>
+            </div>
+
+            {expandedSections.groups && (
+              <div className="space-y-1 px-2 pb-2">
+                {isLoadingCollections ? (
+                  <p className="px-2 py-2 text-xs text-muted-foreground">Loading groups...</p>
+                ) : groups.length > 0 ? (
+                  groups.map((group) => (
+                    <button
+                      key={group.id}
+                      type="button"
+                      onClick={() => navigate(`/groups/${group.id}`)}
+                      className={`flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm transition-colors ${
+                        activeGroupId === group.id
+                          ? 'bg-foreground/[0.08] text-foreground font-medium'
+                          : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground'
+                      }`}
+                    >
+                      <Users size={14} className="shrink-0 opacity-75" />
+                      <span className="truncate">{group.name}</span>
+                    </button>
+                  ))
+                ) : (
+                  <p className="px-2 py-2 text-xs text-muted-foreground">No groups yet.</p>
+                )}
+              </div>
+            )}
+          </section>
+
+          {!isLoadingCollections && chats.length === 0 && projects.length === 0 && groups.length === 0 && (
+            <div className="px-3 py-6 text-center text-xs text-muted-foreground">
+              Your workspace is empty. Start by creating a chat, project, or group.
             </div>
           )}
         </div>

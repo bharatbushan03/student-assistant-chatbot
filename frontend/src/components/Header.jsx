@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useContext } from 'react';
 import { Menu, Sun, Moon, PanelLeft, User, LogOut, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { AuthContext } from '../context/auth-context';
+import { AuthContext } from '../context/AuthContext';
 
 export function Header({ toggleSidebar, isDarkMode, toggleDarkMode, title = 'Miety AI' }) {
   const { user, logoutContext } = useContext(AuthContext);

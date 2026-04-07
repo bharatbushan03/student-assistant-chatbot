@@ -1,17 +1,21 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Sparkles } from 'lucide-react';
+import { Paperclip, Send, X } from 'lucide-react';
 
 export function InputBar({
   onSendMessage,
   isProcessing,
   placeholder = 'Ask me anything about MIET...',
-  helperText = 'AI-powered study assistant for MIET Jammu students',
   onInputChange,
   value,
   onValueChange,
+  onFilesSelected,
+  selectedFiles = [],
+  onRemoveSelectedFile,
+  accept = '*',
 }) {
   const [internalInput, setInternalInput] = useState('');
   const textareaRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   const isControlled = typeof value === 'string';
   const input = isControlled ? value : internalInput;
@@ -67,8 +71,36 @@ export function InputBar({
     }
   };
 
+  const normalizedFiles = (selectedFiles || []).map((file, index) => {
+    if (typeof file === 'string') {
+      return {
+        id: `${file}-${index}`,
+        name: file,
+      };
+    }
+
+    return {
+      id: String(file.id || file.name || `file-${index}`),
+      name: String(file.name || file.filename || `File ${index + 1}`),
+      raw: file,
+    };
+  });
+
+  const handlePickFiles = (event) => {
+    if (!onFilesSelected) {
+      return;
+    }
+
+    const pickedFiles = Array.from(event.target.files || []);
+    if (pickedFiles.length > 0) {
+      onFilesSelected(pickedFiles);
+    }
+
+    event.target.value = '';
+  };
+
   return (
-    <div className="flex-none p-4 w-full max-w-3xl mx-auto">
+    <div className="flex-none w-full">
       <div className="relative flex items-end gap-2
         bg-background border border-border rounded-2xl
         shadow-sm hover:shadow-md transition-all duration-200
@@ -87,6 +119,19 @@ export function InputBar({
           rows={1}
           disabled={isProcessing}
         />
+
+        {onFilesSelected ? (
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isProcessing}
+            className="flex-none p-2.5 rounded-xl mb-0.5 text-muted-foreground transition-all duration-200 hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
+            aria-label="Attach files"
+            title="Attach files"
+          >
+            <Paperclip size={18} />
+          </button>
+        ) : null}
 
         <button
           onClick={handleSend}
@@ -111,12 +156,41 @@ export function InputBar({
             <Send size={18} />
           )}
         </button>
+
+        {onFilesSelected ? (
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            multiple
+            accept={accept}
+            onChange={handlePickFiles}
+          />
+        ) : null}
       </div>
 
-      <div className="flex items-center justify-center gap-2 mt-3 text-xs text-muted-foreground">
-        <Sparkles size={12} className="opacity-50" />
-        <span>{helperText}</span>
-      </div>
+      {normalizedFiles.length > 0 ? (
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          {normalizedFiles.map((file) => (
+            <span
+              key={file.id}
+              className="inline-flex items-center gap-1 rounded-full border border-border bg-muted/40 px-2.5 py-1 text-[11px] text-foreground"
+            >
+              <span className="max-w-[180px] truncate" title={file.name}>{file.name}</span>
+              {onRemoveSelectedFile ? (
+                <button
+                  type="button"
+                  onClick={() => onRemoveSelectedFile(file.raw || file)}
+                  className="rounded-full p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  aria-label={`Remove ${file.name}`}
+                >
+                  <X size={12} />
+                </button>
+              ) : null}
+            </span>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -1,28 +1,110 @@
-import React, { useState, useEffect, useCallback, useContext } from 'react';
+import React, { useState, useEffect, useCallback, useContext, useMemo } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import {
+  FolderKanban,
+  MessageSquare,
+  Users,
+} from 'lucide-react';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { ChatWindow } from './components/ChatWindow';
 import { InputBar } from './components/InputBar';
-import { AuthContext } from './context/auth-context';
+import { AdaptiveToolDeck } from './components/ai/AdaptiveToolDeck';
+import { AuthContext } from './context/AuthContext';
+import { detectPromptContext } from './utils/intentDetection';
+import {
+  LEGACY_WORKSPACE_CHAT_STORAGE_KEY,
+  getWorkspaceChatStorageKey,
+  readWorkspaceChatsByKey,
+  writeWorkspaceChatsByKey,
+} from './utils/chatStorage';
 
 // Helper for generating unique IDs
 const generateId = () => Math.random().toString(36).substring(2, 9);
+const SIDEBAR_STATE_KEY = 'miety-sidebar-open-desktop';
+
+function getAttachmentId(file, fallbackIndex = 0) {
+  return String(
+    file?.id ||
+    file?.file_id ||
+    file?.stored_name ||
+    file?.name ||
+    file?.filename ||
+    `attachment-${fallbackIndex}`
+  );
+}
+
+function getAttachmentName(file, fallbackIndex = 0) {
+  return String(file?.filename || file?.name || `Attachment ${fallbackIndex + 1}`);
+}
+
+function buildAttachmentContext(files) {
+  if (!Array.isArray(files) || files.length === 0) {
+    return {
+      visibleBlock: '',
+      contextBlock: '',
+    };
+  }
+
+  const visibleList = files
+    .map((file, index) => `- ${getAttachmentName(file, index)}`)
+    .join('\n');
+
+  const contextList = files
+    .map((file, index) => {
+      const name = getAttachmentName(file, index);
+      const extractedText = String(file?.extracted_text || file?.preview_text || '').trim();
+      if (!extractedText) {
+        return `- ${name}`;
+      }
+      return `- ${name}\n${extractedText}`;
+    })
+    .join('\n\n');
+
+  return {
+    visibleBlock: `\n\nAttached files:\n${visibleList}`,
+    contextBlock: `\n\nAttached files context:\n${contextList}`,
+  };
+}
+
+function getInitialSidebarOpen() {
+  if (typeof window === 'undefined') {
+    return true;
+  }
+
+  const savedState = localStorage.getItem(SIDEBAR_STATE_KEY);
+  if (savedState !== null) {
+    return savedState === 'true';
+  }
+
+  return window.innerWidth >= 768;
+}
 
 export default function ChatApp() {
   const { user } = useContext(AuthContext);
+  const location = useLocation();
+  const navigate = useNavigate();
   const [isDarkMode, setIsDarkMode] = useState(() => {
-    return localStorage.getItem('theme') === 'dark' || 
-           (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    const saved = localStorage.getItem('theme');
+    if (saved) {
+      return saved === 'dark';
+    }
+
+    // Default to dark for the AI-native workspace aesthetic.
+    return true;
   });
   
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => getInitialSidebarOpen());
+  const [promptDraft, setPromptDraft] = useState('');
+  const [selectedUploadFiles, setSelectedUploadFiles] = useState([]);
+  const [isUploadingFiles, setIsUploadingFiles] = useState(false);
+  const chatStorageKey = useMemo(
+    () => getWorkspaceChatStorageKey(user),
+    [user?.id, user?._id, user?.email]
+  );
   
   // Chats State
-  const [chats, setChats] = useState(() => {
-    const saved = localStorage.getItem('miety-chats');
-    if (saved) return JSON.parse(saved);
-    return [];
-  });
+  const [chats, setChats] = useState([]);
   
   const [activeChatId, setActiveChatId] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -38,14 +120,102 @@ export default function ChatApp() {
     }
   }, [isDarkMode]);
 
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth >= 768) {
+      localStorage.setItem(SIDEBAR_STATE_KEY, String(isSidebarOpen));
+    }
+  }, [isSidebarOpen]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // Remove legacy global chat cache to prevent cross-account leakage.
+      localStorage.removeItem(LEGACY_WORKSPACE_CHAT_STORAGE_KEY);
+    }
+  }, []);
+
+  useEffect(() => {
+    setChats(readWorkspaceChatsByKey(chatStorageKey));
+    setActiveChatId(null);
+    setPromptDraft('');
+    setSelectedUploadFiles([]);
+  }, [chatStorageKey]);
+
   // Sync chats to localStorage
   useEffect(() => {
-    localStorage.setItem('miety-chats', JSON.stringify(chats));
-  }, [chats]);
+    writeWorkspaceChatsByKey(chatStorageKey, chats);
+  }, [chatStorageKey, chats]);
+
+  useEffect(() => {
+    const chatIdFromQuery = new URLSearchParams(location.search).get('chat');
+    if (!chatIdFromQuery) {
+      return;
+    }
+
+    const matchingChat = chats.find((chat) => chat.id === chatIdFromQuery);
+    if (matchingChat) {
+      setActiveChatId(chatIdFromQuery);
+    }
+  }, [location.search, chats]);
 
   // Active chat shortcut
   const activeChat = chats.find(c => c.id === activeChatId);
   const messages = activeChat?.messages || [];
+  const detection = detectPromptContext(promptDraft);
+  const shouldShowToolDeck = promptDraft.trim().length > 0 && detection.activeTools.length > 0;
+  const contextualPlaceholder = getPlaceholder(detection);
+  const attachedChatFiles = useMemo(() => {
+    return selectedUploadFiles.map((file, index) => ({
+      id: getAttachmentId(file, index),
+      name: getAttachmentName(file, index),
+    }));
+  }, [selectedUploadFiles]);
+
+  const handleAddChatFiles = useCallback(async (pickedFiles) => {
+    setIsUploadingFiles(true);
+
+    try {
+      const formData = new FormData();
+      pickedFiles.forEach((file) => formData.append('files', file));
+
+      const response = await fetch('/chat/files/ingest', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('File upload failed');
+      }
+
+      const payload = await response.json();
+      const uploadedFiles = Array.isArray(payload?.files) ? payload.files : [];
+
+      setSelectedUploadFiles((currentFiles) => {
+        const nextById = new Map(
+          currentFiles.map((file, index) => [getAttachmentId(file, index), file])
+        );
+
+        uploadedFiles.forEach((file, index) => {
+          nextById.set(getAttachmentId(file, index), file);
+        });
+
+        return Array.from(nextById.values());
+      });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsUploadingFiles(false);
+    }
+  }, []);
+
+  const handleRemoveChatFile = useCallback((selectedFile) => {
+    const targetId = getAttachmentId(selectedFile);
+    setSelectedUploadFiles((currentFiles) => {
+      return currentFiles.filter((file, index) => getAttachmentId(file, index) !== targetId);
+    });
+  }, []);
 
   const handleNewChat = useCallback(() => {
     const newChat = {
@@ -56,15 +226,16 @@ export default function ChatApp() {
     };
     setChats(prev => [newChat, ...prev]);
     setActiveChatId(newChat.id);
-    if (window.innerWidth < 768) setIsSidebarOpen(false); // Close sidebar on mobile after select
-  }, []);
+    navigate(`/?chat=${newChat.id}`, { replace: true });
+  }, [navigate]);
 
   const handleDeleteChat = useCallback((id) => {
     setChats(prev => prev.filter(c => c.id !== id));
     if (activeChatId === id) {
       setActiveChatId(null);
+      navigate('/', { replace: true });
     }
-  }, [activeChatId]);
+  }, [activeChatId, navigate]);
 
   const handleSendMessage = useCallback(async (content) => {
     if (!content.trim()) return;
@@ -85,6 +256,7 @@ export default function ChatApp() {
       newChatsState = [newChat, ...newChatsState];
       chatIndex = 0;
       setActiveChatId(chatId);
+      navigate(`/?chat=${chatId}`, { replace: true });
     }
 
     // Prepare history without the new message by converting UI 'ai' role to internal 'assistant' role
@@ -93,11 +265,15 @@ export default function ChatApp() {
       content: m.content
     }));
 
+    const attachmentContext = buildAttachmentContext(selectedUploadFiles);
+    const visibleContent = `${content}${attachmentContext.visibleBlock}`;
+    const outboundContent = `${content}${attachmentContext.contextBlock}`;
+
     // Add user message
     const userMessage = {
       id: generateId(),
       role: 'user',
-      content: content,
+      content: visibleContent,
       timestamp: Date.now()
     };
     
@@ -119,7 +295,7 @@ export default function ChatApp() {
           "Authorization": `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify({
-          question: content,
+          question: outboundContent,
           history: apiHistory
         })
       });
@@ -147,6 +323,7 @@ export default function ChatApp() {
         }
         return c;
       }));
+      setSelectedUploadFiles([]);
     } catch (error) {
       console.error(error);
       setChats(currentChats => currentChats.map(c => {
@@ -158,7 +335,7 @@ export default function ChatApp() {
               {
                 id: generateId(),
                 role: 'ai',
-                content: "**Error:** Could not connect to the backend server. Please make sure the FastAPI backend is running on `http://127.0.0.1:8000`.",
+                content: "**Error:** Could not connect to the backend server. Please make sure the FastAPI backend is running on http://127.0.0.1:10000.",
                 timestamp: Date.now()
               }
             ]
@@ -169,7 +346,7 @@ export default function ChatApp() {
     } finally {
       setIsProcessing(false);
     }
-  }, [chats, activeChatId]);
+  }, [chats, activeChatId, selectedUploadFiles]);
 
   return (
     <div className="flex bg-background text-foreground h-screen overflow-hidden font-sans">
@@ -180,32 +357,109 @@ export default function ChatApp() {
         activeChatId={activeChatId}
         onSelectChat={(id) => {
           setActiveChatId(id);
-          if (window.innerWidth < 768) setIsSidebarOpen(false);
+          navigate(`/?chat=${id}`, { replace: true });
         }}
         onNewChat={handleNewChat}
         onDeleteChat={handleDeleteChat}
       />
-      
-      <main className="flex-1 flex flex-col min-w-0 h-full relative">
-        <Header
-          toggleSidebar={() => setIsSidebarOpen((current) => !current)}
-          isDarkMode={isDarkMode}
-          toggleDarkMode={() => setIsDarkMode(!isDarkMode)}
-          user={user}
-        />
-        
-        <ChatWindow 
-          messages={messages} 
-          isProcessing={isProcessing}
-        />
-        
-        <div className="bg-gradient-to-t from-background to-transparent pt-4 pb-2 z-10 w-full relative">
-          <InputBar 
-            onSendMessage={handleSendMessage}
-            isProcessing={isProcessing}
+
+      <div className="flex min-w-0 flex-1">
+        <main className="relative flex min-w-0 flex-1 flex-col pb-16 md:pb-0">
+          <Header
+            toggleSidebar={() => setIsSidebarOpen((current) => !current)}
+            isDarkMode={isDarkMode}
+            toggleDarkMode={() => setIsDarkMode(!isDarkMode)}
+            user={user}
+            title="Miety AI Workspace"
           />
-        </div>
-      </main>
+
+          <div className="flex min-h-0 flex-1 flex-col px-3 pb-2 pt-3 md:px-4">
+            <div className="min-h-0 flex-1 overflow-hidden rounded-2xl border border-white/10 bg-slate-950/20 shadow-[0_20px_50px_rgba(3,7,18,0.24)]">
+              <ChatWindow
+                messages={messages}
+                isProcessing={isProcessing}
+              />
+            </div>
+
+            {shouldShowToolDeck ? (
+              <div className="mt-2 max-h-[30vh] overflow-auto pr-1">
+                <AdaptiveToolDeck detection={detection} />
+              </div>
+            ) : null}
+
+            <div className="relative z-10 mt-6 w-full bg-gradient-to-t from-background via-background/95 to-transparent pt-4 pb-4">
+              <InputBar
+                onSendMessage={handleSendMessage}
+                isProcessing={isProcessing || isUploadingFiles}
+                placeholder={contextualPlaceholder}
+                helperText=""
+                value={promptDraft}
+                onValueChange={setPromptDraft}
+                onFilesSelected={handleAddChatFiles}
+                selectedFiles={attachedChatFiles}
+                onRemoveSelectedFile={handleRemoveChatFile}
+              />
+            </div>
+          </div>
+        </main>
+      </div>
+
+      <MobileWorkspaceDock
+        onOpenChats={() => navigate('/')}
+        onOpenProjects={() => navigate('/projects')}
+        onOpenGroups={() => navigate('/groups')}
+      />
     </div>
+  );
+}
+
+function getPlaceholder(detection) {
+  const primary = detection?.primaryIntent;
+
+  if (primary === 'coding') {
+    return 'Ask anything... paste code, errors, stack traces, or architecture ideas';
+  }
+
+  if (primary === 'data_analysis') {
+    return 'Ask anything... paste CSV rows, metrics, tables, or analysis goals';
+  }
+
+  if (primary === 'image_generation') {
+    return 'Ask anything... describe visuals, styles, lighting, and composition';
+  }
+
+  if (primary === 'voice') {
+    return 'Ask anything... paste transcript ideas or request voice workflows';
+  }
+
+  return 'Ask anything... paste code, data, images, docs, or ideas';
+}
+
+function MobileWorkspaceDock({
+  onOpenChats,
+  onOpenProjects,
+  onOpenGroups,
+}) {
+  return (
+    <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-white/10 bg-slate-950/90 px-3 py-2 backdrop-blur-xl md:hidden">
+      <div className="grid grid-cols-3 gap-2">
+        <DockButton icon={MessageSquare} label="Chats" onClick={onOpenChats} />
+        <DockButton icon={FolderKanban} label="Projects" onClick={onOpenProjects} />
+        <DockButton icon={Users} label="Groups" onClick={onOpenGroups} />
+      </div>
+    </nav>
+  );
+}
+
+function DockButton({ icon: Icon, label, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex flex-col items-center justify-center gap-1 rounded-xl border border-white/10 bg-slate-900/70 py-2 text-[11px] text-slate-200 transition hover:border-sky-300/25 hover:bg-slate-900"
+    >
+      <Icon size={14} />
+      <span>{label}</span>
+    </button>
   );
 }
