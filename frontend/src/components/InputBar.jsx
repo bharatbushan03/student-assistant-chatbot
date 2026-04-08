@@ -5,6 +5,7 @@ export function InputBar({
   onSendMessage,
   isProcessing,
   placeholder = 'Ask me anything about MIET...',
+  helperText = '',
   onInputChange,
   value,
   onValueChange,
@@ -102,8 +103,8 @@ export function InputBar({
   return (
     <div className="flex-none w-full">
       <div className="relative flex items-end gap-2
-        bg-background border border-border rounded-2xl
-        shadow-sm hover:shadow-md transition-all duration-200
+        bg-background border border-border/80 rounded-2xl
+        shadow-sm transition-all duration-200
         focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary
         overflow-hidden p-2">
 
@@ -125,7 +126,7 @@ export function InputBar({
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={isProcessing}
-            className="flex-none p-2.5 rounded-xl mb-0.5 text-muted-foreground transition-all duration-200 hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex-none p-2.5 rounded-xl mb-0.5 text-muted-foreground hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
             aria-label="Attach files"
             title="Attach files"
           >
@@ -168,6 +169,10 @@ export function InputBar({
           />
         ) : null}
       </div>
+
+      {helperText ? (
+        <p className="mt-2 px-1 text-xs text-muted-foreground">{helperText}</p>
+      ) : null}
 
       {normalizedFiles.length > 0 ? (
         <div className="mt-2 flex flex-wrap items-center gap-2">

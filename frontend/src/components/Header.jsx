@@ -25,11 +25,11 @@ export function Header({ toggleSidebar, isDarkMode, toggleDarkMode, title = 'Mie
   };
 
   return (
-    <header className="z-10 flex h-14 flex-none items-center justify-between border-b border-border/80 bg-background/90 px-4 backdrop-blur">
+    <header className="z-20 flex h-14 flex-none items-center justify-between border-b border-border/70 bg-background/92 px-4 backdrop-blur">
       <div className="flex items-center gap-3">
         <button
           onClick={toggleSidebar}
-          className="-ml-2 rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted/80"
+          className="-ml-2 rounded-lg p-2 text-muted-foreground hover:bg-muted/80 hover:text-foreground"
           aria-label="Toggle sidebar"
         >
           <PanelLeft size={20} className="hidden md:block" />
@@ -43,7 +43,7 @@ export function Header({ toggleSidebar, isDarkMode, toggleDarkMode, title = 'Mie
       <div className="flex items-center gap-2">
         <button
           onClick={toggleDarkMode}
-          className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted/80"
+          className="rounded-lg p-2 text-muted-foreground hover:bg-muted/80 hover:text-foreground"
           aria-label="Toggle theme"
         >
           {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
@@ -53,7 +53,7 @@ export function Header({ toggleSidebar, isDarkMode, toggleDarkMode, title = 'Mie
         <div className="relative" ref={menuRef}>
           <button
             onClick={() => setShowMenu(!showMenu)}
-            className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted/80"
+            className="rounded-lg p-2 text-muted-foreground hover:bg-muted/80 hover:text-foreground"
             aria-label="User menu"
           >
             <User size={20} />

@@ -92,6 +92,9 @@ Answer questions accurately and concisely. 2-4 sentences max. No introductions o
         try:
             response = get_llm_client().generate(messages, max_tokens=400)
             return response.strip()
+        except RuntimeError as exc:
+            logger.error("LLM generation error for no-context query: %s", exc)
+            raise
         except Exception as exc:
             logger.error("LLM generation failed for no-context query: %s", exc)
             return "I couldn't find specific information. Please check MIET's official website."
@@ -159,7 +162,7 @@ Answer the question directly."""
 
     except RuntimeError as exc:
         logger.error("LLM generation error: %s", exc)
-        return str(exc)
+        raise
     except Exception as exc:
         logger.error("LLM generation failed: %s", exc)
         return "I'm experiencing technical difficulties. Please try again in a moment."

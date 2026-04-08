@@ -57,6 +57,21 @@ def test_ask_question_minimum_length():
         fastapi_app.dependency_overrides.clear()
 
 
+def test_ask_question_runtime_error_returns_503():
+    """Runtime errors from the RAG/LLM layer should surface as 503."""
+    from app.routes.chat import get_current_user
+    fastapi_app.dependency_overrides[get_current_user] = override_get_current_user
+
+    try:
+        with patch("app.routes.chat.answer_query", side_effect=RuntimeError("OpenAI quota is exhausted")):
+            response = client.post("/chat/ask", json={"question": "Explain attendance policy"})
+
+        assert response.status_code == 503
+        assert "quota" in response.json()["detail"].lower()
+    finally:
+        fastapi_app.dependency_overrides.clear()
+
+
 def test_health_check():
     """Health endpoint should return 200."""
     response = client.get("/health")

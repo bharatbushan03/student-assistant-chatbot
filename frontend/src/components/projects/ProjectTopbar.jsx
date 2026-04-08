@@ -17,7 +17,7 @@ export function ProjectTopbar({
   onToggleDarkMode,
 }) {
   return (
-    <header className="border-b border-border/80 bg-background/90 px-4 py-3 backdrop-blur">
+    <header className="sticky top-0 z-20 border-b border-border/70 bg-background/92 px-4 py-3 backdrop-blur">
       <div className="flex flex-wrap items-center gap-3">
         <button
           type="button"

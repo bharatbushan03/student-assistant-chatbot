@@ -15,7 +15,7 @@ export function MessageBubble({ message }) {
   };
 
   return (
-    <div className={`group w-full px-4 py-5 animate-fade-in ${isAI ? 'border-y border-border/40 bg-card/60' : ''}`}>
+    <div className={`group w-full px-4 py-4 animate-fade-in ${isAI ? 'border-b border-border/50 bg-muted/20' : ''}`}>
       <div className="max-w-4xl mx-auto flex gap-4">
         {/* Avatar */}
         <div className="flex-none mt-0.5">

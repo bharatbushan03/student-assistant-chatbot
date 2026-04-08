@@ -37,7 +37,7 @@ export function ProjectsSidebar({
   const [groups, setGroups] = useState([]);
   const [isLoadingGroups, setIsLoadingGroups] = useState(true);
   const [expandedSections, setExpandedSections] = useState({
-    chats: true,
+    chats: false,
     projects: true,
     groups: true,
   });
@@ -114,7 +114,7 @@ export function ProjectsSidebar({
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-30 flex w-72 flex-col overflow-hidden border-r border-border/80 bg-card/95 backdrop-blur-xl transition-all duration-300 ease-in-out md:static md:flex md:translate-x-0 md:duration-200 ${
+        className={`fixed inset-y-0 left-0 z-30 flex w-72 flex-col overflow-hidden border-r border-border/80 bg-card/92 backdrop-blur-xl transition-all duration-300 ease-in-out md:static md:flex md:translate-x-0 md:duration-200 ${
           isOpen
             ? 'translate-x-0 md:w-72'
             : '-translate-x-full md:w-0 md:border-r-0'
@@ -144,7 +144,7 @@ export function ProjectsSidebar({
                   onClick={() => navigate('/')}
                   className={`flex flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium transition-colors ${
                     isChatView
-                      ? 'bg-foreground text-background'
+                      ? 'border border-primary/25 bg-primary/12 text-foreground'
                       : 'text-foreground hover:bg-muted/70'
                   }`}
                 >
@@ -214,7 +214,7 @@ export function ProjectsSidebar({
                 onClick={() => navigate('/projects')}
                 className={`flex flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium transition-colors ${
                   isProjectView
-                    ? 'bg-foreground text-background'
+                    ? 'border border-primary/25 bg-primary/12 text-foreground'
                     : 'text-foreground hover:bg-muted/70'
                 }`}
               >
@@ -263,7 +263,7 @@ export function ProjectsSidebar({
                 onClick={() => navigate('/groups')}
                 className={`flex flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium transition-colors ${
                   isGroupView
-                    ? 'bg-foreground text-background'
+                    ? 'border border-primary/25 bg-primary/12 text-foreground'
                     : 'text-foreground hover:bg-muted/70'
                 }`}
               >

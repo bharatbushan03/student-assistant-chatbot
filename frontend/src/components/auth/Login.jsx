@@ -2,11 +2,15 @@ import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import api from '../../utils/api';
-import { LogIn, Mail, Lock } from 'lucide-react';
+import { LogIn, Mail, Lock, School, ShieldCheck } from 'lucide-react';
+
+const STUDENT_EMAIL_REGEX = /^[a-z0-9]+@mietjammu\.in$/;
+const FACULTY_ADMIN_EMAIL_REGEX = /^[a-z]+(?:\.[a-z]+)+@mietjammu\.in$/;
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [mode, setMode] = useState('student');
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -18,11 +22,29 @@ const Login = () => {
     setError(null);
     setIsSubmitting(true);
 
+    const normalizedEmail = email.trim().toLowerCase();
+    if (mode === 'student' && !STUDENT_EMAIL_REGEX.test(normalizedEmail)) {
+      setError('Student email must follow format yourrollno@mietjammu.in.');
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (mode === 'faculty_admin' && !FACULTY_ADMIN_EMAIL_REGEX.test(normalizedEmail)) {
+      setError('Faculty/Admin email must follow format yourname.dept@mietjammu.in.');
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
-      const { data } = await api.post('/auth/login', { email, password });
+      const { data } = await api.post('/auth/login', { email: normalizedEmail, password, mode });
       if (data.success) {
         loginContext(data.user, data.token);
-        navigate('/');
+        const role = (data.user?.role || 'student').toLowerCase();
+        if (role === 'student') {
+          navigate('/student/dashboard');
+        } else {
+          navigate('/faculty/dashboard');
+        }
       }
     } catch (err) {
       // Backend returns {detail: "..."} not {message: "..."}
@@ -31,6 +53,13 @@ const Login = () => {
       setIsSubmitting(false);
     }
   };
+
+  const emailPlaceholder =
+    mode === 'faculty_admin' ? 'yourname.dept@mietjammu.in' : 'yourrollno@mietjammu.in';
+  const emailHint =
+    mode === 'faculty_admin'
+      ? 'Faculty/Admin format: yourname.dept@mietjammu.in'
+      : 'Student format: yourrollno@mietjammu.in';
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
@@ -60,6 +89,36 @@ const Login = () => {
           {/* Form */}
           <form onSubmit={handleLogin} className="space-y-5">
             <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Login Mode</label>
+              <div className="grid grid-cols-2 gap-2 rounded-xl border border-border bg-background p-1">
+                <button
+                  type="button"
+                  onClick={() => setMode('student')}
+                  className={`flex items-center justify-center gap-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                    mode === 'student'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:bg-muted'
+                  }`}
+                >
+                  <School size={14} />
+                  Student
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMode('faculty_admin')}
+                  className={`flex items-center justify-center gap-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                    mode === 'faculty_admin'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:bg-muted'
+                  }`}
+                >
+                  <ShieldCheck size={14} />
+                  Faculty/Admin
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
               <label className="text-sm font-medium text-foreground flex items-center gap-2">
                 <Mail size={14} className="text-muted-foreground" />
                 Email Address
@@ -69,12 +128,13 @@ const Login = () => {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="yourname@mietjammu.in"
+                placeholder={emailPlaceholder}
                 className="w-full px-4 py-3 bg-background border border-border rounded-xl
                   text-foreground placeholder:text-muted-foreground
                   focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary
                   transition-all duration-200"
               />
+              <p className="text-xs text-muted-foreground">{emailHint}</p>
             </div>
 
             <div className="space-y-2">

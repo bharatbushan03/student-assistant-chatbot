@@ -4,6 +4,14 @@ import api from '../utils/api';
 
 export const AuthContext = createContext(null);
 
+function normalizeRole(rawRole) {
+  const role = typeof rawRole === 'string' ? rawRole.toLowerCase() : 'student';
+  if (role === 'faculty' || role === 'admin') {
+    return role;
+  }
+  return 'student';
+}
+
 function normalizeUser(rawUser) {
   if (!rawUser || typeof rawUser !== 'object') {
     return null;
@@ -11,11 +19,13 @@ function normalizeUser(rawUser) {
 
   const normalizedId = rawUser.id || rawUser._id || null;
   const normalizedAvatar = rawUser.avatar_url || rawUser.profile_picture || null;
+  const normalizedRole = normalizeRole(rawUser.role);
 
   return {
     ...rawUser,
     id: normalizedId,
     _id: rawUser._id || normalizedId,
+    role: normalizedRole,
     avatar_url: normalizedAvatar,
     profile_picture: rawUser.profile_picture || normalizedAvatar,
   };
@@ -47,6 +57,7 @@ export const AuthProvider = ({ children }) => {
                 id: decoded?.id || decoded?._id,
                 _id: decoded?._id || decoded?.id,
                 email: decoded?.email,
+                role: decoded?.role,
                 name: decoded?.name,
                 avatar_url: decoded?.avatar_url || decoded?.profile_picture,
                 profile_picture: decoded?.profile_picture || decoded?.avatar_url,

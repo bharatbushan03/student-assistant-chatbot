@@ -2,7 +2,7 @@
 
 A **RAG-powered chatbot** for MIET Jammu students. Ask about admissions, courses, fees, placements, campus life, and more.
 
-Built with **FastAPI** + **Pinecone** + **HuggingFace Inference API** (default: Qwen/Qwen2.5-72B-Instruct).
+Built with **FastAPI** + **Pinecone** + **langchain_openai** (default model: `gpt-4o-mini`).
 
 ---
 
@@ -22,7 +22,7 @@ pip install -r requirements.txt
 
 ```bash
 cp .env.example .env
-# Edit .env and add your HuggingFace API token and PINECONE_API_KEY
+# Edit .env and add your OpenAI API key and PINECONE_API_KEY
 ```
 
 ### 3. Build the knowledge base
@@ -60,7 +60,7 @@ Open **http://localhost:5173** in your browser.
 	- `MONGODB_URI`
 	- `MONGODB_DATABASE`
 	- `PINECONE_API_KEY`
-	- `HUGGINGFACEHUB_API_TOKEN` (or `OPENAI_API_KEY`)
+	- `OPENAI_API_KEY`
 4. Deploy — Render uses the `Dockerfile` and `render.yaml` automatically
 
 ---

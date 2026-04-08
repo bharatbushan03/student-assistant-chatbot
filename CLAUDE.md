@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with th
 
 ## Project Overview
 
-"MIETY AI" — RAG-powered college student assistant chatbot for MIET Jammu. Built with FastAPI backend, React frontend, MongoDB for persistence, and Pinecone for vector retrieval. Default LLM: Qwen/Qwen2.5-72B-Instruct via HuggingFace Inference API (OpenAI also supported).
+"MIETY AI" — RAG-powered college student assistant chatbot for MIET Jammu. Built with FastAPI backend, React frontend, MongoDB for persistence, and Pinecone for vector retrieval. LLM integration: `langchain_openai` with OpenAI models.
 
 ## Architecture
 
@@ -30,7 +30,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with th
 ### Key Patterns
 
 - **Caching**: `@lru_cache(maxsize=1)` for `get_settings()`, `_get_index()`, `get_llm_client()`, `get_embedding_model()` — singletons
-- **LLM fallback**: OpenAI used if `OPENAI_API_KEY` is set; falls back to HuggingFace
+- **LLM provider**: OpenAI via `langchain_openai`
 - **Async**: Blocking RAG and retriever calls use `asyncio.to_thread()`
 - **Auth**: JWT tokens with 7-day expiry, decoded in `app/utils/auth.py` via `get_current_user` dependency. All protected routes require valid JWT.
 - **Socket.IO auth**: Token passed in Socket.IO `auth` dict on connect, verified in `connect` event
@@ -74,12 +74,12 @@ cd frontend && npm run build
 
 # Docker
 docker build -t student-assistant .
-docker run -p 10000:10000 -e HUGGINGFACEHUB_API_TOKEN=$HUGGINGFACEHUB_API_TOKEN student-assistant
+docker run -p 10000:10000 -e OPENAI_API_KEY=$OPENAI_API_KEY student-assistant
 ```
 
 ## Environment
 
-Required: `PINECONE_API_KEY` + (`HUGGINGFACEHUB_API_TOKEN` or `OPENAI_API_KEY`).
+Required: `PINECONE_API_KEY` + `OPENAI_API_KEY`.
 Optional: `MONGODB_URI`, `MONGODB_DATABASE`, `JWT_SECRET` (defaults to insecure value — override in production).
 
 ## Frontend

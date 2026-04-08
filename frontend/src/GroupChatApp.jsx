@@ -1573,7 +1573,7 @@ export default function GroupChatApp() {
   );
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background font-sans text-foreground">
+    <div className="app-shell">
       <GroupSidebar
         isOpen={isSidebarOpen}
         setIsOpen={setIsSidebarOpen}
@@ -1584,7 +1584,7 @@ export default function GroupChatApp() {
         isLoading={groupsLoading}
       />
 
-      <main className="relative flex min-w-0 flex-1 flex-col">
+      <main className="app-main">
         <Header
           toggleSidebar={() => setIsSidebarOpen((current) => !current)}
           isDarkMode={isDarkMode}
@@ -1616,7 +1616,7 @@ export default function GroupChatApp() {
 
           {activeGroupSummary}
 
-          <div className={`min-h-0 flex-1 overflow-hidden rounded-3xl border border-border shadow-sm ${activeThemeStyles.shell}`}>
+          <div className={`surface-panel min-h-0 flex-1 overflow-hidden ${activeThemeStyles.shell}`}>
             {groupId ? (
               <div className="flex h-full flex-col">
                 <GroupMessagesList
@@ -2074,7 +2074,7 @@ function AddFriendModal({ email, error, isSubmitting, onEmailChange, onClose, on
               value={email}
               onChange={(event) => onEmailChange(event.target.value)}
               className="w-full rounded-2xl border border-border bg-muted/30 px-4 py-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary"
-              placeholder="friend@mietjammu.in"
+              placeholder="yourrollno@mietjammu.in or yourname.dept@mietjammu.in"
             />
           </Field>
 
