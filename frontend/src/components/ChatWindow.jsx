@@ -2,7 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import { MessageBubble } from './MessageBubble';
 import { Bot } from 'lucide-react';
 
-export function ChatWindow({ messages, isProcessing }) {
+export function ChatWindow({ messages, isProcessing, onSuggestionSelect }) {
   const endOfMessagesRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -22,17 +22,16 @@ export function ChatWindow({ messages, isProcessing }) {
         <h2 className="text-2xl font-semibold mb-2 text-foreground">
           Welcome to Miety AI
         </h2>
-        <p className="text-muted-foreground max-w-md mb-8">
-          Your intelligent study assistant for MIET Jammu.
-          Ask me anything about your courses, assignments, or campus life.
+        <p className="text-muted-foreground max-w-md mb-7">
+          Ask a question, paste context, or start with a quick prompt below.
         </p>
 
         {/* Suggestion chips */}
         <div className="flex flex-wrap justify-center gap-2 max-w-2xl">
-          <SuggestionChip text="What is the exam schedule?" />
-          <SuggestionChip text="Tell me about library hours" />
-          <SuggestionChip text="How do I register for courses?" />
-          <SuggestionChip text="Campus facilities overview" />
+          <SuggestionChip text="What is the exam schedule this semester?" onClick={onSuggestionSelect} />
+          <SuggestionChip text="Tell me today's important campus updates" onClick={onSuggestionSelect} />
+          <SuggestionChip text="Help me plan my study week" onClick={onSuggestionSelect} />
+          <SuggestionChip text="Summarize assignment tips for me" onClick={onSuggestionSelect} />
         </div>
       </div>
     );
@@ -46,7 +45,7 @@ export function ChatWindow({ messages, isProcessing }) {
         ))}
         {isProcessing && (
           <div className="w-full py-6 px-4 animate-fade-in">
-            <div className="max-w-4xl mx-auto flex gap-6">
+            <div className="max-w-4xl mx-auto flex gap-5">
               <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
                 <Bot size={18} className="text-primary" />
               </div>
@@ -64,11 +63,13 @@ export function ChatWindow({ messages, isProcessing }) {
   );
 }
 
-function SuggestionChip({ text }) {
+function SuggestionChip({ text, onClick }) {
   return (
     <button
+      type="button"
+      onClick={() => onClick?.(text)}
       className="rounded-full border border-border bg-card px-4 py-2 text-sm text-muted-foreground
-        hover:border-primary/40 hover:bg-muted/70 hover:text-foreground
+        hover:border-primary/30 hover:bg-muted/70 hover:text-foreground
         transition-all duration-200"
     >
       {text}

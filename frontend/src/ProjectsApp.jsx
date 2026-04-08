@@ -673,7 +673,7 @@ export default function ProjectsApp() {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background text-foreground">
+    <div className="app-shell">
       <ProjectsSidebar
         isOpen={isSidebarOpen}
         setIsOpen={setIsSidebarOpen}
@@ -692,7 +692,7 @@ export default function ProjectsApp() {
         onTogglePinChat={handleTogglePinChat}
       />
 
-      <main className="flex min-w-0 flex-1 flex-col">
+      <main className="app-main">
         <ProjectTopbar
           title={activeProject?.name || (loadingProjects ? 'Loading projects...' : 'Projects')}
           subtitle={activeProject?.description || ''}

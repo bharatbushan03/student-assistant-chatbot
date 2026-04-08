@@ -349,7 +349,7 @@ export default function ChatApp() {
   }, [chats, activeChatId, selectedUploadFiles]);
 
   return (
-    <div className="flex bg-background text-foreground h-screen overflow-hidden font-sans">
+    <div className="app-shell">
       <Sidebar 
         isOpen={isSidebarOpen} 
         setIsOpen={setIsSidebarOpen}
@@ -364,7 +364,7 @@ export default function ChatApp() {
       />
 
       <div className="flex min-w-0 flex-1">
-        <main className="relative flex min-w-0 flex-1 flex-col pb-16 md:pb-0">
+        <main className="app-main pb-16 md:pb-0">
           <Header
             toggleSidebar={() => setIsSidebarOpen((current) => !current)}
             isDarkMode={isDarkMode}
@@ -374,10 +374,11 @@ export default function ChatApp() {
           />
 
           <div className="flex min-h-0 flex-1 flex-col px-3 pb-2 pt-3 md:px-4">
-            <div className="min-h-0 flex-1 overflow-hidden rounded-2xl border border-white/10 bg-slate-950/20 shadow-[0_20px_50px_rgba(3,7,18,0.24)]">
+            <div className="surface-panel min-h-0 flex-1 overflow-hidden">
               <ChatWindow
                 messages={messages}
                 isProcessing={isProcessing}
+                onSuggestionSelect={setPromptDraft}
               />
             </div>
 
@@ -387,7 +388,7 @@ export default function ChatApp() {
               </div>
             ) : null}
 
-            <div className="relative z-10 mt-6 w-full bg-gradient-to-t from-background via-background/95 to-transparent pt-4 pb-4">
+            <div className="relative z-10 mt-3 w-full bg-gradient-to-t from-background via-background/96 to-transparent pt-3 pb-4">
               <InputBar
                 onSendMessage={handleSendMessage}
                 isProcessing={isProcessing || isUploadingFiles}
@@ -441,7 +442,7 @@ function MobileWorkspaceDock({
   onOpenGroups,
 }) {
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-white/10 bg-slate-950/90 px-3 py-2 backdrop-blur-xl md:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border/70 bg-background/92 px-3 py-2 backdrop-blur-xl md:hidden">
       <div className="grid grid-cols-3 gap-2">
         <DockButton icon={MessageSquare} label="Chats" onClick={onOpenChats} />
         <DockButton icon={FolderKanban} label="Projects" onClick={onOpenProjects} />
@@ -456,7 +457,7 @@ function DockButton({ icon: Icon, label, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex flex-col items-center justify-center gap-1 rounded-xl border border-white/10 bg-slate-900/70 py-2 text-[11px] text-slate-200 transition hover:border-sky-300/25 hover:bg-slate-900"
+      className="inline-flex flex-col items-center justify-center gap-1 rounded-xl border border-border/70 bg-card/90 py-2 text-[11px] text-muted-foreground transition hover:bg-muted/70 hover:text-foreground"
     >
       <Icon size={14} />
       <span>{label}</span>

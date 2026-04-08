@@ -6,8 +6,10 @@ services:
     region: oregon
     healthCheckPath: /health
     envVars:
-      - key: HUGGINGFACEHUB_API_TOKEN
+      - key: OPENAI_API_KEY
         sync: false
+      - key: OPENAI_MODEL
+        value: gpt-4o-mini
       - key: PORT
         value: 10000
       - key: PROJECT_ROOT

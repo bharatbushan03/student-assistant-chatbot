@@ -618,7 +618,6 @@ MONGODB_DATABASE=miety_ai
 JWT_SECRET=your-secret-key
 
 # AI (existing)
-HUGGINGFACEHUB_API_TOKEN=...
 OPENAI_API_KEY=...
 ```
 

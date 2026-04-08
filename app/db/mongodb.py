@@ -59,3 +59,9 @@ def get_users_collection():
     """Get the users collection for database operations."""
     db = get_database()
     return db["users"]
+
+
+def get_student_academics_collection():
+    """Get the student academics collection for results and analytics."""
+    db = get_database()
+    return db["student_academics"]

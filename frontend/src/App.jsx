@@ -10,6 +10,8 @@ import GroupChatApp from './GroupChatApp';
 import Profile from './components/profile/Profile';
 import PrivacyPolicy from './components/legal/PrivacyPolicy';
 import TermsAndConditions from './components/legal/TermsAndConditions';
+import StudentDashboard from './components/dashboard/StudentDashboard';
+import FacultyDashboard from './components/dashboard/FacultyDashboard';
 
 function App() {
   return (
@@ -24,6 +26,24 @@ function App() {
             element={
               <ProtectedRoute>
                 <ChatApp />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/student/dashboard"
+            element={
+              <ProtectedRoute allowedRoles={['student']}>
+                <StudentDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/faculty/dashboard"
+            element={
+              <ProtectedRoute allowedRoles={['faculty', 'admin']}>
+                <FacultyDashboard />
               </ProtectedRoute>
             }
           />

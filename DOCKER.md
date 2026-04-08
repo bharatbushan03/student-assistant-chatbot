@@ -24,7 +24,7 @@ cp .env.docker .env
 
 Required values:
 - `JWT_SECRET`
-- `HUGGINGFACEHUB_API_TOKEN` or `OPENAI_API_KEY`
+- `OPENAI_API_KEY`
 - `PINECONE_API_KEY`
 - `MONGODB_URI` (defaults to `mongodb://mongo:27017/miety_ai`)
 - `MONGODB_DATABASE` (defaults to `miety_ai`)
@@ -101,7 +101,7 @@ Expected Vite proxy targets:
 - Verify `MONGODB_URI` and `MONGODB_DATABASE` values
 
 ### AI responses fail
-- Ensure at least one LLM credential is set: `HUGGINGFACEHUB_API_TOKEN` or `OPENAI_API_KEY`
+- Ensure LLM credentials are set: `OPENAI_API_KEY`
 - Confirm Pinecone credentials/index are valid
 
 ## Production Notes

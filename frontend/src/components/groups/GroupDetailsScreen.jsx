@@ -38,57 +38,15 @@ function getInitials(name) {
 function DetailActionButton({ icon, label, onClick, disabled = false }) {
   const ActionIcon = icon;
 
-  const handlePointerMove = (event) => {
-    const bounds = event.currentTarget.getBoundingClientRect();
-    const x = event.clientX - bounds.left;
-    const y = event.clientY - bounds.top;
-
-    event.currentTarget.style.setProperty('--mx', `${x}px`);
-    event.currentTarget.style.setProperty('--my', `${y}px`);
-    event.currentTarget.style.setProperty('--spot', '1');
-  };
-
-  const handlePointerEnter = (event) => {
-    event.currentTarget.style.setProperty('--spot', '1');
-  };
-
-  const handlePointerLeave = (event) => {
-    event.currentTarget.style.setProperty('--mx', '50%');
-    event.currentTarget.style.setProperty('--my', '50%');
-    event.currentTarget.style.setProperty('--spot', '0');
-  };
-
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      onPointerMove={handlePointerMove}
-      onPointerEnter={handlePointerEnter}
-      onPointerLeave={handlePointerLeave}
-      className="group relative flex min-w-[86px] flex-1 items-center justify-center gap-2 overflow-hidden rounded-2xl border border-sky-300/20 bg-slate-900/80 px-3 py-2.5 text-xs font-medium text-slate-100 transition duration-300 hover:border-sky-300/45 hover:shadow-[0_10px_28px_rgba(14,165,233,0.2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/45 disabled:cursor-not-allowed disabled:opacity-50"
-      style={{
-        '--mx': '50%',
-        '--my': '50%',
-        '--spot': '0',
-      }}
+      className="flex min-w-[86px] flex-1 items-center justify-center gap-2 rounded-2xl border border-border bg-card px-3 py-2.5 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
     >
-      <span
-        className="pointer-events-none absolute h-28 w-28 rounded-full transition duration-150"
-        style={{
-          left: 'var(--mx)',
-          top: 'var(--my)',
-          opacity: 'var(--spot)',
-          transform: 'translate(-50%, -50%)',
-          background:
-            'radial-gradient(circle, rgba(125,211,252,0.42) 0%, rgba(129,140,248,0.28) 40%, rgba(59,130,246,0.06) 72%, transparent 100%)',
-          filter: 'blur(6px)',
-        }}
-      />
-      <span className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100" style={{ background: 'linear-gradient(135deg, rgba(125,211,252,0.08), rgba(129,140,248,0.03))' }} />
-      <span className="pointer-events-none absolute inset-x-5 bottom-0 h-px bg-gradient-to-r from-transparent via-sky-300/45 to-transparent opacity-60" />
-      <ActionIcon size={14} className="relative" />
-      <span className="relative">{label}</span>
+      <ActionIcon size={14} />
+      <span>{label}</span>
     </button>
   );
 }
@@ -119,7 +77,7 @@ function SettingRow({
       className={`flex w-full items-center justify-between gap-3 rounded-2xl border px-3 py-2.5 text-left transition-all duration-300 ${
         destructive
           ? 'border-red-500/25 bg-red-500/8 hover:bg-red-500/12'
-          : 'border-border/80 bg-slate-900/35 hover:border-sky-300/20 hover:bg-slate-900/55'
+          : 'border-border/80 bg-card/70 hover:bg-muted/60'
       }`}
     >
       <div className="flex min-w-0 items-center gap-3">
@@ -151,9 +109,9 @@ function ContentCard({ item, type }) {
       href={item.url}
       target="_blank"
       rel="noreferrer"
-      className="group min-w-[210px] overflow-hidden rounded-2xl border border-border/80 bg-slate-900/45 transition duration-300 hover:-translate-y-0.5 hover:border-sky-300/30 hover:bg-slate-900/70"
+      className="group min-w-[210px] overflow-hidden rounded-2xl border border-border/80 bg-card/65 transition duration-200 hover:-translate-y-0.5 hover:bg-card"
     >
-      <div className="relative h-28 overflow-hidden border-b border-border/60 bg-slate-950/70">
+      <div className="relative h-28 overflow-hidden border-b border-border/60 bg-muted/40">
         {type === 'media' && isImage ? (
           <img src={item.url} alt="media" className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]" />
         ) : (
@@ -188,7 +146,7 @@ function MemberRow({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <div className="relative flex items-center justify-between gap-2 rounded-2xl border border-border/80 bg-slate-900/35 px-3 py-2.5 transition-colors hover:bg-slate-900/55">
+    <div className="relative flex items-center justify-between gap-2 rounded-2xl border border-border/80 bg-card/70 px-3 py-2.5 transition-colors hover:bg-muted/60">
       <div className="flex min-w-0 items-center gap-3">
         {member.avatar_url ? (
           <img
@@ -415,8 +373,8 @@ export function GroupDetailsScreen({
   return (
     <div className="fixed inset-0 z-[80] animate-fade-in bg-black/65 backdrop-blur-sm">
       <div className="h-full w-full md:p-6">
-        <div className="mx-auto flex h-full w-full max-w-5xl flex-col overflow-hidden border border-sky-300/15 bg-background shadow-[0_30px_80px_rgba(2,6,23,0.55)] md:rounded-3xl">
-          <div className="sticky top-0 z-30 border-b border-border/70 bg-slate-950/85 px-4 py-3 backdrop-blur-xl">
+        <div className="mx-auto flex h-full w-full max-w-5xl flex-col overflow-hidden border border-border bg-background shadow-[0_18px_50px_rgba(2,6,23,0.28)] md:rounded-3xl">
+          <div className="sticky top-0 z-30 border-b border-border/70 bg-background/92 px-4 py-3 backdrop-blur-xl">
             <div className="flex items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-3">
                 <button
@@ -428,15 +386,15 @@ export function GroupDetailsScreen({
                   <ArrowLeft size={16} />
                 </button>
 
-                <div className={`rounded-full bg-gradient-to-br p-[2px] ${isMuted ? 'from-slate-500 to-slate-700' : 'from-sky-400 via-indigo-400 to-violet-500'}`}>
+                <div className={`rounded-full bg-gradient-to-br p-[2px] ${isMuted ? 'from-muted-foreground/55 to-muted-foreground/35' : 'from-primary/80 to-primary/40'}`}>
                   {group.avatar_url ? (
                     <img
                       src={group.avatar_url}
                       alt={group.name}
-                      className="h-12 w-12 rounded-full border border-black/30 object-cover"
+                      className="h-12 w-12 rounded-full border border-border object-cover"
                     />
                   ) : (
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full border border-black/30 bg-slate-900 text-sm font-semibold text-foreground">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full border border-border bg-card text-sm font-semibold text-foreground">
                       {getInitials(group.name)}
                     </div>
                   )}
@@ -463,8 +421,8 @@ export function GroupDetailsScreen({
             </div>
           </div>
 
-          <div className="flex-1 space-y-6 overflow-y-auto bg-gradient-to-b from-slate-950/40 via-background to-background px-4 py-4 md:px-6 md:py-5">
-            <section className="rounded-2xl border border-sky-300/18 bg-slate-950/85 p-3 shadow-[0_12px_30px_rgba(2,8,23,0.38)] backdrop-blur-xl">
+          <div className="flex-1 space-y-6 overflow-y-auto bg-gradient-to-b from-background/96 via-background to-background px-4 py-4 md:px-6 md:py-5">
+            <section className="rounded-2xl border border-border/80 bg-card/80 p-3 shadow-sm">
               <SectionTitle title="Quick Actions" subtitle="Audio, video, add, and search with one tap." />
               <div className="flex flex-wrap gap-2">
                 <DetailActionButton icon={Phone} label="Audio" onClick={onAudioCall} />
@@ -483,7 +441,7 @@ export function GroupDetailsScreen({
               <SectionTitle title="About Group" subtitle="Only admins can edit group description." />
 
               {!isEditingDescription ? (
-                <div className="rounded-2xl border border-sky-300/18 bg-slate-900/40 px-4 py-3">
+                <div className="rounded-2xl border border-border/80 bg-card/70 px-4 py-3">
                   <p className="text-sm text-foreground">
                     {group.description || 'No group description available.'}
                   </p>
@@ -492,14 +450,14 @@ export function GroupDetailsScreen({
                     <button
                       type="button"
                       onClick={() => setIsEditingDescription(true)}
-                      className="mt-3 inline-flex items-center gap-2 rounded-full border border-sky-300/20 bg-slate-950 px-3 py-1.5 text-xs font-medium text-sky-200 transition-colors hover:border-sky-300/40 hover:bg-slate-900"
+                      className="mt-3 inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
                     >
                       Edit Description
                     </button>
                   ) : null}
                 </div>
               ) : (
-                <div className="space-y-3 rounded-2xl border border-sky-300/18 bg-slate-900/45 px-4 py-3">
+                <div className="space-y-3 rounded-2xl border border-border/80 bg-card/70 px-4 py-3">
                   <textarea
                     value={descriptionDraft}
                     onChange={(event) => setDescriptionDraft(event.target.value)}
@@ -550,7 +508,7 @@ export function GroupDetailsScreen({
                     }}
                     className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                       activeContentTab === tab.key
-                        ? 'bg-foreground text-background'
+                        ? 'border border-primary/25 bg-primary/12 text-foreground'
                         : 'border border-border bg-background/65 text-foreground hover:bg-muted'
                     }`}
                   >
@@ -565,7 +523,7 @@ export function GroupDetailsScreen({
                       setVisibleContentCount(activeItems.length);
                       setIsViewingAllContent((current) => !current);
                     }}
-                    className="ml-auto rounded-full border border-sky-300/20 bg-background/70 px-3 py-1.5 text-xs font-medium text-sky-200 transition-colors hover:border-sky-300/40 hover:bg-muted"
+                    className="ml-auto rounded-full border border-border bg-background/70 px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
                   >
                     {isViewingAllContent ? 'Back to Strip' : 'View All'}
                   </button>

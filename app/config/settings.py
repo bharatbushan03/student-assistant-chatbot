@@ -16,13 +16,11 @@ class Settings(BaseSettings):
 
     # API keys
     openai_api_key: str | None = Field(default=None, alias="OPENAI_API_KEY")
-    huggingface_api_token: str | None = Field(default=None, alias="HUGGINGFACEHUB_API_TOKEN")
     pinecone_api_key: str | None = Field(default=None, alias="PINECONE_API_KEY")
     jwt_secret: str = Field(default="your_super_secret_jwt_key_here", alias="JWT_SECRET")
 
     # Model configuration
-    openai_model: str = "gpt-3.5-turbo"
-    huggingface_model: str = "Qwen/Qwen2.5-72B-Instruct"
+    openai_model: str = Field(default="gpt-4o-mini", alias="OPENAI_MODEL")
 
     # Retrieval / storage
     processed_chunks_path: Path = PROJECT_ROOT / "data" / "processed" / "chunks.txt"
