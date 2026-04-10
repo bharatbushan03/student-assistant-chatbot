@@ -149,7 +149,6 @@ async def handle_mongodb_errors(request: Request, exc: PyMongoError):
 fastapi_app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )

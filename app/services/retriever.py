@@ -200,7 +200,7 @@ def retrieve_with_scores(query: str, n_results: int | None = None) -> List[Dict[
     )
 
     matches = results.get("matches", [])
-    results: list[dict[str, Any]] = []
+    scored_docs: list[dict[str, Any]] = []
     seen_fingerprints: set[str] = set()
     for match in matches:
         content = (match.get("metadata") or {}).get("text", "")
@@ -210,11 +210,11 @@ def retrieve_with_scores(query: str, n_results: int | None = None) -> List[Dict[
         if fingerprint in seen_fingerprints:
             continue
         seen_fingerprints.add(fingerprint)
-        results.append(
+        scored_docs.append(
             {
                 "content": content,
                 "score": match.get("score", 0.0),
             }
         )
 
-    return results
+    return scored_docs

@@ -411,12 +411,8 @@ async def change_password(
 
 
 @router.get("/users")
-async def list_all_users():
-    """List all registered users (admin endpoint for debugging).
-
-    WARNING: In production, this should be protected by admin-only authentication.
-    For now, returns only email addresses and creation dates.
-    """
+async def list_all_users(current_user: dict = Depends(require_roles("admin"))):
+    """List all registered users. Restricted to admin accounts only."""
     users = get_users_collection()
 
     # Fetch all users, excluding password hashes

@@ -202,7 +202,8 @@ Respond naturally to continue the conversation.""",
             return response
 
         except Exception as e:
-            return f"I apologize, but I'm having trouble responding right now. Please try again in a moment. (Error: {str(e)})"
+            logger.error("AI generation error in generate_response: %s", e)
+            return "I apologize, but I'm having trouble responding right now. Please try again in a moment."
 
     @staticmethod
     async def summarize_conversation(
