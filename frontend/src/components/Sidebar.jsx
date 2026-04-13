@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { ChevronDown, ChevronUp, FolderKanban, MessageSquare, Plus, Trash2, Users, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, FolderKanban, MessageSquare, Plus, Trash2, Users, X, LayoutDashboard } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { listProjects } from '../utils/projectsApi';
 import { listGroups } from '../utils/groupsApi';
+import { AuthContext } from '../context/AuthContext';
+import { useContext } from 'react';
 
 export function Sidebar({
   isOpen,
@@ -11,10 +13,11 @@ export function Sidebar({
   activeChatId,
   onSelectChat,
   onNewChat,
-  onDeleteChat
+  onDeleteChat,
 }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useContext(AuthContext);
   const [projects, setProjects] = useState([]);
   const [groups, setGroups] = useState([]);
   const [isLoadingCollections, setIsLoadingCollections] = useState(true);
@@ -48,10 +51,11 @@ export function Sidebar({
 
         setProjects(projectsResponse || []);
         setGroups(groupsResponse || []);
-      } catch (error) {
+      } catch {
         if (!isMounted) {
           return;
         }
+
         setProjects([]);
         setGroups([]);
       } finally {
@@ -77,234 +81,207 @@ export function Sidebar({
 
   return (
     <>
-      {/* Mobile overlay */}
-      {isOpen && (
+      {isOpen ? (
         <div
-          className="fixed inset-0 z-20 animate-fade-in bg-black/40 backdrop-blur-sm md:hidden"
+          className="fixed inset-0 z-20 bg-slate-900/20 md:hidden"
           onClick={() => setIsOpen(false)}
         />
-      )}
+      ) : null}
 
-      {/* Sidebar container */}
       <aside
-        className={`
-          fixed inset-y-0 left-0 z-30
-          flex w-72 flex-col overflow-hidden border-r border-border/80 bg-card/92 backdrop-blur-xl
-          transition-all duration-300 ease-in-out md:static md:flex md:translate-x-0 md:duration-200
-          ${isOpen
-            ? 'translate-x-0 md:w-72'
-            : '-translate-x-full md:w-0 md:border-r-0'}
-        `}
+        className={`app-sidebar fixed inset-y-0 left-0 z-30 flex flex-col overflow-hidden transition-transform duration-200 md:static md:translate-x-0 ${
+          isOpen ? 'translate-x-0' : '-translate-x-full md:hidden'
+        }`}
       >
-        {/* Header */}
-        <div className="border-b border-border p-4">
-          <div className="mb-3 px-1 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-            Workspace
-          </div>
-
+        <div className="border-b border-border px-4 py-5">
+          <p className="section-label">Workspace</p>
           <button
+            type="button"
             onClick={onNewChat}
-            className="flex items-center justify-center gap-2 w-full px-4 py-2.5
-              bg-primary text-primary-foreground rounded-lg
-              hover:bg-primary/90 transition-colors
-              font-medium text-sm shadow-sm"
+            className="primary-button mt-4 w-full gap-2"
           >
-            <Plus size={18} />
-            <span>New Chat</span>
+            <Plus size={20} />
+            New Chat
           </button>
         </div>
 
-        <div className="flex-1 space-y-3 overflow-y-auto px-3 py-3">
-          <section className="rounded-lg border border-border/70 bg-muted/20">
-            <div className="flex items-center justify-between px-2 py-2">
-              <button
-                type="button"
-                onClick={() => navigate('/')}
-                className={`flex flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium transition-colors ${
-                  isChatView
-                    ? 'border border-primary/25 bg-primary/12 text-foreground'
-                    : 'text-foreground hover:bg-muted/70'
-                }`}
-              >
-                <MessageSquare size={15} />
-                <span>Chats</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => toggleSection('chats')}
-                className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
-                aria-label={expandedSections.chats ? 'Hide chats' : 'Show chats'}
-              >
-                {expandedSections.chats ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
-              </button>
-            </div>
-
-            {expandedSections.chats && (
-              <div className="space-y-1 px-2 pb-2">
-                {chats.map((chat) => (
-                  <div
-                    key={chat.id}
-                    onClick={() => onSelectChat(chat.id)}
-                    className={`
-                      group flex cursor-pointer items-center justify-between rounded-md border px-2.5 py-2 text-sm transition-all
-                      ${activeChatId === chat.id
-                        ? 'border-foreground/20 bg-foreground/[0.06] text-foreground font-medium'
-                        : 'border-transparent text-muted-foreground hover:bg-muted/70 hover:text-foreground'
-                      }
-                    `}
-                  >
-                    <div className="flex flex-1 items-center gap-2 overflow-hidden">
-                      <MessageSquare size={14} className="shrink-0 opacity-70" />
-                      <span className="truncate">{chat.title}</span>
-                    </div>
-                    <button
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        onDeleteChat(chat.id);
-                      }}
-                      className="rounded-md p-1 opacity-0 transition-all hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
-                      aria-label="Delete chat"
-                    >
-                      <Trash2 size={13} />
-                    </button>
+        <div className="flex-1 space-y-4 overflow-y-auto px-3 py-4">
+          <WorkspaceSection
+            title="Chats"
+            icon={MessageSquare}
+            isActive={isChatView}
+            isExpanded={expandedSections.chats}
+            onNavigate={() => navigate('/')}
+            onToggle={() => toggleSection('chats')}
+          >
+            {chats.length > 0 ? (
+              chats.map((chat) => (
+                <div
+                  key={chat.id}
+                  onClick={() => onSelectChat(chat.id)}
+                  className={`group flex cursor-pointer items-center justify-between rounded-2xl px-3 py-2.5 text-sm transition-colors ${
+                    activeChatId === chat.id
+                      ? 'bg-sky-100 text-sky-700 font-medium'
+                      : 'text-slate-600 hover:bg-sky-50 hover:text-sky-900'
+                  }`}
+                >
+                  <div className="flex min-w-0 items-center gap-2">
+                    <MessageSquare size={20} className="shrink-0" />
+                    <span className="truncate">{chat.title}</span>
                   </div>
-                ))}
-
-                {chats.length === 0 && (
-                  <p className="px-2 py-2 text-xs text-muted-foreground">No chats yet.</p>
-                )}
-              </div>
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onDeleteChat(chat.id);
+                    }}
+                    className="rounded-full p-1 text-slate-400 opacity-0 hover:bg-red-100 hover:text-red-600 group-hover:opacity-100 transition-colors"
+                    aria-label="Delete chat"
+                  >
+                    <Trash2 size={20} />
+                  </button>
+                </div>
+              ))
+            ) : (
+              <p className="px-3 py-1 text-sm text-muted-foreground">No chats yet.</p>
             )}
-          </section>
+          </WorkspaceSection>
 
-          <section className="rounded-lg border border-border/70 bg-muted/20">
-            <div className="flex items-center justify-between px-2 py-2">
+          <WorkspaceSection
+            title="Projects"
+            icon={FolderKanban}
+            isActive={isProjectView}
+            isExpanded={expandedSections.projects}
+            onNavigate={() => navigate('/projects')}
+            onToggle={() => toggleSection('projects')}
+          >
+            {isLoadingCollections ? (
+              <p className="px-3 py-1 text-sm text-muted-foreground">Loading projects...</p>
+            ) : projects.length > 0 ? (
+              projects.map((project) => (
+                <button
+                  key={project.id}
+                  type="button"
+                  onClick={() => navigate(`/projects/${project.id}`)}
+                  className={`flex w-full items-center gap-2 rounded-2xl px-3 py-2.5 text-left text-sm transition-colors ${
+                    activeProjectId === project.id
+                      ? 'bg-sky-100 text-sky-700 font-medium'
+                      : 'text-slate-600 hover:bg-sky-50 hover:text-sky-900'
+                  }`}
+                >
+                  <FolderKanban size={20} className="shrink-0" />
+                  <span className="truncate">{project.name}</span>
+                </button>
+              ))
+            ) : (
+              <p className="px-3 py-1 text-sm text-muted-foreground">No projects yet.</p>
+            )}
+          </WorkspaceSection>
+
+          <WorkspaceSection
+            title="Groups"
+            icon={Users}
+            isActive={isGroupView}
+            isExpanded={expandedSections.groups}
+            onNavigate={() => navigate('/groups')}
+            onToggle={() => toggleSection('groups')}
+          >
+            {isLoadingCollections ? (
+              <p className="px-3 py-1 text-sm text-muted-foreground">Loading groups...</p>
+            ) : groups.length > 0 ? (
+              groups.map((group) => (
+                <button
+                  key={group.id}
+                  type="button"
+                  onClick={() => navigate(`/groups/${group.id}`)}
+                  className={`flex w-full items-center gap-2 rounded-2xl px-3 py-2.5 text-left text-sm transition-colors ${
+                    activeGroupId === group.id
+                      ? 'bg-sky-100 text-sky-700 font-medium'
+                      : 'text-slate-600 hover:bg-sky-50 hover:text-sky-900'
+                  }`}
+                >
+                  <Users size={20} className="shrink-0" />
+                  <span className="truncate">{group.name}</span>
+                </button>
+              ))
+            ) : (
+              <p className="px-3 py-1 text-sm text-muted-foreground">No groups yet.</p>
+            )}
+          </WorkspaceSection>
+
+          <section className="rounded-[1.5rem] border border-sky-100 bg-sky-50/50 px-2 py-2 shadow-none">
+            <div className="flex items-center gap-2 px-2 py-1">
               <button
                 type="button"
-                onClick={() => navigate('/projects')}
-                className={`flex flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium transition-colors ${
-                  isProjectView
-                    ? 'border border-primary/25 bg-primary/12 text-foreground'
-                    : 'text-foreground hover:bg-muted/70'
-                }`}
+                onClick={() => {
+                  if (user?.role === 'admin' || user?.role === 'faculty') {
+                    navigate('/faculty/dashboard');
+                  } else {
+                    navigate('/student/dashboard');
+                  }
+                }}
+                className="flex flex-1 items-center gap-2 rounded-2xl px-3 py-2 text-sm font-medium transition-colors text-slate-700 hover:bg-sky-50"
               >
-                <FolderKanban size={15} />
-                <span>Projects</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => toggleSection('projects')}
-                className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
-                aria-label={expandedSections.projects ? 'Hide projects' : 'Show projects'}
-              >
-                {expandedSections.projects ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+                <LayoutDashboard size={20} />
+                Dashboard
               </button>
             </div>
-
-            {expandedSections.projects && (
-              <div className="space-y-1 px-2 pb-2">
-                {isLoadingCollections ? (
-                  <p className="px-2 py-2 text-xs text-muted-foreground">Loading projects...</p>
-                ) : projects.length > 0 ? (
-                  projects.map((project) => (
-                    <button
-                      key={project.id}
-                      type="button"
-                      onClick={() => navigate(`/projects/${project.id}`)}
-                      className={`flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm transition-colors ${
-                        activeProjectId === project.id
-                          ? 'bg-foreground/[0.08] text-foreground font-medium'
-                          : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground'
-                      }`}
-                    >
-                      <FolderKanban size={14} className="shrink-0 opacity-75" />
-                      <span className="truncate">{project.name}</span>
-                    </button>
-                  ))
-                ) : (
-                  <p className="px-2 py-2 text-xs text-muted-foreground">No projects yet.</p>
-                )}
-              </div>
-            )}
           </section>
-
-          <section className="rounded-lg border border-border/70 bg-muted/20">
-            <div className="flex items-center justify-between px-2 py-2">
-              <button
-                type="button"
-                onClick={() => navigate('/groups')}
-                className={`flex flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium transition-colors ${
-                  isGroupView
-                    ? 'border border-primary/25 bg-primary/12 text-foreground'
-                    : 'text-foreground hover:bg-muted/70'
-                }`}
-              >
-                <Users size={15} />
-                <span>Groups</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => toggleSection('groups')}
-                className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
-                aria-label={expandedSections.groups ? 'Hide groups' : 'Show groups'}
-              >
-                {expandedSections.groups ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
-              </button>
-            </div>
-
-            {expandedSections.groups && (
-              <div className="space-y-1 px-2 pb-2">
-                {isLoadingCollections ? (
-                  <p className="px-2 py-2 text-xs text-muted-foreground">Loading groups...</p>
-                ) : groups.length > 0 ? (
-                  groups.map((group) => (
-                    <button
-                      key={group.id}
-                      type="button"
-                      onClick={() => navigate(`/groups/${group.id}`)}
-                      className={`flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm transition-colors ${
-                        activeGroupId === group.id
-                          ? 'bg-foreground/[0.08] text-foreground font-medium'
-                          : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground'
-                      }`}
-                    >
-                      <Users size={14} className="shrink-0 opacity-75" />
-                      <span className="truncate">{group.name}</span>
-                    </button>
-                  ))
-                ) : (
-                  <p className="px-2 py-2 text-xs text-muted-foreground">No groups yet.</p>
-                )}
-              </div>
-            )}
-          </section>
-
-          {!isLoadingCollections && chats.length === 0 && projects.length === 0 && groups.length === 0 && (
-            <div className="px-3 py-6 text-center text-xs text-muted-foreground">
-              Your workspace is empty. Start by creating a chat, project, or group.
-            </div>
-          )}
         </div>
 
-        {/* Footer info */}
-        <div className="p-4 border-t border-border">
-          <p className="text-center text-xs tracking-wide text-muted-foreground">
-            Miety AI - Your Study Assistant
-          </p>
+        <div className="border-t border-border px-4 py-4">
+          <p className="text-sm text-muted-foreground">Student Assistant</p>
         </div>
 
-        {/* Mobile close button */}
         <button
           type="button"
           onClick={() => setIsOpen(false)}
-          className="absolute top-3 right-3 p-1.5
-            z-40 rounded-md text-muted-foreground hover:bg-muted
-            md:hidden"
+          className="absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card text-muted-foreground hover:bg-muted md:hidden"
           aria-label="Close sidebar"
         >
-          <X size={18} />
+          <X size={16} />
         </button>
       </aside>
     </>
+  );
+}
+
+function WorkspaceSection({
+  title,
+  icon: Icon,
+  isActive,
+  isExpanded,
+  onNavigate,
+  onToggle,
+  children,
+}) {
+  return (
+    <section className="rounded-[1.5rem] border border-sky-100 bg-sky-50/50 px-2 py-2 shadow-none">
+      <div className="flex items-center gap-2 px-2 py-1">
+        <button
+          type="button"
+          onClick={onNavigate}
+          className={`flex flex-1 items-center gap-2 rounded-2xl px-3 py-2 text-sm font-medium transition-colors ${
+            isActive
+              ? 'bg-sky-100 text-sky-700'
+              : 'text-slate-700 hover:bg-sky-50'
+          }`}
+        >
+          <Icon size={20} />
+          {title}
+        </button>
+
+        <button
+          type="button"
+          onClick={onToggle}
+          className="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-500 hover:bg-sky-100 hover:text-sky-700 transition-colors"
+          aria-label={isExpanded ? `Hide ${title}` : `Show ${title}`}
+        >
+          {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+        </button>
+      </div>
+
+      {isExpanded ? <div className="space-y-1 px-1 pb-1 pt-2">{children}</div> : null}
+    </section>
   );
 }

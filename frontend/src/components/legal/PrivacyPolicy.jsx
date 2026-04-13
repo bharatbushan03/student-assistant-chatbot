@@ -7,28 +7,31 @@ const PrivacyPolicy = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="h-14 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-10">
-        <div className="container mx-auto px-4 h-full flex items-center gap-4">
+      <header className="sticky top-0 z-10 border-b border-border bg-background">
+        <div className="mx-auto flex h-16 max-w-3xl items-center gap-4 px-4">
           <button
             onClick={() => navigate('/')}
-            className="p-2 -ml-2 rounded-md hover:bg-muted text-muted-foreground transition-colors"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-border bg-card text-muted-foreground hover:bg-muted"
             aria-label="Go back"
           >
             <ArrowLeft size={20} />
           </button>
-          <div className="font-semibold text-lg bg-clip-text text-transparent bg-gradient-to-r from-primary to-ring">
-            Miety AI
+          <div className="flex items-center gap-3">
+            <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-accent text-sm font-bold text-accent-foreground">
+              M
+            </span>
+            <div>
+              <p className="text-base font-semibold text-foreground">Miety AI</p>
+              <p className="text-sm text-muted-foreground">Privacy information</p>
+            </div>
           </div>
         </div>
       </header>
 
-      {/* Content */}
-      <main className="container mx-auto px-4 py-8 max-w-3xl">
-        <div className="bg-card rounded-2xl border border-border shadow-lg p-6 md:p-8">
-          {/* Title */}
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-3 bg-primary/10 rounded-xl">
+      <main className="mx-auto max-w-3xl px-4 py-8">
+        <div className="panel-card p-6 md:p-8">
+          <div className="mb-6 flex items-center gap-3">
+            <div className="rounded-2xl bg-accent p-3 text-accent-foreground">
               <Shield size={24} className="text-primary" />
             </div>
             <h1 className="text-2xl md:text-3xl font-bold text-foreground">
@@ -40,7 +43,6 @@ const PrivacyPolicy = () => {
             Last updated: <span className="text-foreground">January 1, 2025</span>
           </p>
 
-          {/* Sections */}
           <div className="space-y-8 text-foreground/90 leading-relaxed">
             <section>
               <h2 className="text-xl font-semibold text-foreground mb-3">
@@ -200,7 +202,6 @@ const PrivacyPolicy = () => {
           </div>
         </div>
 
-        {/* Footer Note */}
         <div className="mt-6 text-center text-sm text-muted-foreground">
           <p>This Privacy Policy is part of our Terms of Service.</p>
         </div>

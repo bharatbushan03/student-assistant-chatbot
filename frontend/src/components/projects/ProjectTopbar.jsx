@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronRight, Download, FolderOpen, Menu, Moon, Settings2, Share2, Sun } from 'lucide-react';
+import { ChevronRight, Download, FolderOpen, Menu, Settings2, Share2 } from 'lucide-react';
 
 export function ProjectTopbar({
   title,
@@ -13,51 +13,41 @@ export function ProjectTopbar({
   onToggleIncludePreviousChats,
   onExport,
   onShare,
-  isDarkMode,
-  onToggleDarkMode,
 }) {
   return (
-    <header className="sticky top-0 z-20 border-b border-border/70 bg-background/92 px-4 py-3 backdrop-blur">
+    <header className="border-b border-border bg-background px-4 py-3 md:px-5">
       <div className="flex flex-wrap items-center gap-3">
         <button
           type="button"
           onClick={onToggleSidebar}
-          className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted md:hidden"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-border bg-card text-muted-foreground hover:bg-muted md:hidden"
           aria-label="Toggle project sidebar"
         >
-          <Menu size={20} />
+          <Menu size={18} />
         </button>
 
         <div className="min-w-0 flex-1">
+          <p className="section-label">Project</p>
           <h1 className="truncate text-lg font-semibold text-foreground">{title || 'Project Workspace'}</h1>
-          {subtitle ? <p className="truncate text-xs text-muted-foreground">{subtitle}</p> : null}
+          {subtitle ? <p className="truncate text-sm text-muted-foreground">{subtitle}</p> : null}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
             onClick={onToggleFilesPanel}
-            className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+            className="secondary-button gap-2 !rounded-2xl !px-3 !py-2 text-xs"
             title="Open project files"
           >
             <FolderOpen size={14} />
             Files
-            <ChevronRight size={12} className={`transition-transform ${isFilesPanelOpen ? 'rotate-180' : ''}`} />
-          </button>
-
-          <button
-            type="button"
-            onClick={onToggleDarkMode}
-            className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted"
-          >
-            {isDarkMode ? <Sun size={14} /> : <Moon size={14} />}
-            Theme
+            <ChevronRight size={12} className={`transition-transform ${isFilesPanelOpen ? 'rotate-90' : ''}`} />
           </button>
 
           <button
             type="button"
             onClick={onExport}
-            className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+            className="secondary-button gap-2 !rounded-2xl !px-3 !py-2 text-xs"
           >
             <Download size={14} />
             Export
@@ -66,7 +56,7 @@ export function ProjectTopbar({
           <button
             type="button"
             onClick={onShare}
-            className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+            className="secondary-button gap-2 !rounded-2xl !px-3 !py-2 text-xs"
           >
             <Share2 size={14} />
             Share
@@ -74,18 +64,23 @@ export function ProjectTopbar({
         </div>
       </div>
 
-      <div className="mt-3 flex items-center justify-end">
-        <div className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-xs text-foreground">
-          <Settings2 size={14} className="text-muted-foreground" />
-          <label className="inline-flex items-center gap-1">
+      <div className="mt-3 rounded-[1.5rem] border border-border bg-card px-4 py-3">
+        <div className="flex flex-wrap items-center gap-3 text-sm text-foreground">
+          <div className="inline-flex items-center gap-2 text-muted-foreground">
+            <Settings2 size={14} />
+            Context
+          </div>
+
+          <label className="inline-flex items-center gap-2 rounded-full bg-muted px-3 py-1.5">
             <input
               type="checkbox"
               checked={includeProjectFiles}
               onChange={(event) => onToggleIncludeProjectFiles(event.target.checked)}
             />
-            Files context
+            Files
           </label>
-          <label className="inline-flex items-center gap-1">
+
+          <label className="inline-flex items-center gap-2 rounded-full bg-muted px-3 py-1.5">
             <input
               type="checkbox"
               checked={includePreviousChats}

@@ -1,8 +1,8 @@
-import React, { useState, useContext } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useContext, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { LogIn } from 'lucide-react';
 import { AuthContext } from '../../context/AuthContext';
 import api from '../../utils/api';
-import { LogIn, Mail, Lock, School, ShieldCheck } from 'lucide-react';
 
 const STUDENT_EMAIL_REGEX = /^[a-z0-9]+@mietjammu\.in$/;
 const FACULTY_ADMIN_EMAIL_REGEX = /^[a-z]+(?:\.[a-z]+)+@mietjammu\.in$/;
@@ -17,8 +17,8 @@ const Login = () => {
   const { loginContext } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
+  const handleLogin = async (event) => {
+    event.preventDefault();
     setError(null);
     setIsSubmitting(true);
 
@@ -40,14 +40,9 @@ const Login = () => {
       if (data.success) {
         loginContext(data.user, data.token);
         const role = (data.user?.role || 'student').toLowerCase();
-        if (role === 'student') {
-          navigate('/student/dashboard');
-        } else {
-          navigate('/faculty/dashboard');
-        }
+        navigate(role === 'student' ? '/student/dashboard' : '/faculty/dashboard');
       }
     } catch (err) {
-      // Backend returns {detail: "..."} not {message: "..."}
       setError(err.response?.data?.detail || err.response?.data?.message || 'Invalid credentials.');
     } finally {
       setIsSubmitting(false);
@@ -62,131 +57,96 @@ const Login = () => {
       : 'Student format: yourrollno@mietjammu.in';
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md relative">
-        {/* Card */}
-        <div className="rounded-2xl border border-border bg-card/95 p-8 shadow-[0_18px_50px_-24px_hsl(var(--foreground)/0.3)] backdrop-blur">
-          {/* Logo and Title */}
-          <div className="text-center mb-8">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-primary/20 bg-primary/12">
-              <LogIn size={26} className="text-primary" />
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-50 to-slate-100 dark:from-background dark:to-background px-4 py-8">
+      <div className="w-full max-w-md">
+        <div className="panel-card p-8 shadow-md rounded-[12px]">
+          <div className="text-center mb-6">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-primary/10 text-primary mb-4">
+              <LogIn size={24} />
             </div>
-            <h2 className="text-2xl font-bold text-foreground mb-1">
-              Welcome Back
-            </h2>
-            <p className="text-muted-foreground text-sm">
-              Sign in to continue to Miety AI
-            </p>
+            <h1 className="text-2xl font-bold text-foreground">Welcome Back</h1>
+            <p className="mt-1 text-sm text-muted-foreground">Sign in to continue to your assistant.</p>
           </div>
 
-          {/* Error Message */}
-          {error && (
-            <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 text-destructive rounded-lg text-sm text-center">
-              {error}
-            </div>
-          )}
-
-          {/* Form */}
-          <form onSubmit={handleLogin} className="space-y-5">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Login Mode</label>
-              <div className="grid grid-cols-2 gap-2 rounded-xl border border-border bg-background p-1">
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-foreground">Login Mode</label>
+              <div className="grid grid-cols-2 gap-2 rounded-3xl bg-muted p-1">
                 <button
                   type="button"
                   onClick={() => setMode('student')}
-                  className={`flex items-center justify-center gap-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  className={`rounded-[1.1rem] px-4 py-3 text-sm font-semibold ${
                     mode === 'student'
                       ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:bg-muted'
+                      : 'text-muted-foreground hover:bg-card hover:text-foreground'
                   }`}
                 >
-                  <School size={14} />
                   Student
                 </button>
                 <button
                   type="button"
                   onClick={() => setMode('faculty_admin')}
-                  className={`flex items-center justify-center gap-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  className={`rounded-[1.1rem] px-4 py-3 text-sm font-semibold ${
                     mode === 'faculty_admin'
                       ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:bg-muted'
+                      : 'text-muted-foreground hover:bg-card hover:text-foreground'
                   }`}
                 >
-                  <ShieldCheck size={14} />
                   Faculty/Admin
                 </button>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                <Mail size={14} className="text-muted-foreground" />
-                Email Address
-              </label>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-foreground">MIET Email</label>
               <input
                 type="email"
                 required
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(event) => setEmail(event.target.value)}
                 placeholder={emailPlaceholder}
-                className="w-full px-4 py-3 bg-background border border-border rounded-xl
-                  text-foreground placeholder:text-muted-foreground
-                  focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary
-                  transition-all duration-200"
+                className="soft-input"
               />
-              <p className="text-xs text-muted-foreground">{emailHint}</p>
+              <p className="mt-2 text-xs text-muted-foreground">{emailHint}</p>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                <Lock size={14} className="text-muted-foreground" />
-                Password
-              </label>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-foreground">Password</label>
               <input
                 type="password"
                 required
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(event) => setPassword(event.target.value)}
                 placeholder="Enter your password"
-                className="w-full px-4 py-3 bg-background border border-border rounded-xl
-                  text-foreground placeholder:text-muted-foreground
-                  focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary
-                  transition-all duration-200"
+                className="soft-input"
               />
             </div>
 
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full py-3 px-4 bg-primary
-                text-primary-foreground font-semibold rounded-xl
-                hover:bg-primary/90
-                disabled:opacity-50 disabled:cursor-not-allowed
-                transition-colors duration-200 shadow-sm"
-            >
+            {error ? (
+              <div className="rounded-2xl border border-destructive/15 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                {error}
+              </div>
+            ) : null}
+
+            <button type="submit" disabled={isSubmitting} className="primary-button w-full mt-2">
               {isSubmitting ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
 
-          {/* Footer */}
-          <p className="mt-8 text-center text-sm text-muted-foreground">
-            Don't have an account?{' '}
-            <Link
-              to="/signup"
-              className="text-primary font-medium hover:underline transition-colors"
-            >
-              Create one
+          <p className="mt-4 text-center text-sm text-muted-foreground">
+            Don&apos;t have an account?{' '}
+            <Link to="/signup" className="font-semibold text-primary hover:underline">
+              Sign Up
             </Link>
           </p>
         </div>
 
-        {/* Legal links */}
-        <div className="mt-6 flex justify-center gap-4 text-xs text-muted-foreground">
-          <Link to="/privacy-policy" className="hover:text-foreground transition-colors">
+        <div className="mt-5 text-center text-sm text-muted-foreground">
+          <Link to="/privacy-policy" className="hover:text-foreground">
             Privacy Policy
           </Link>
-          <span>•</span>
-          <Link to="/terms-and-conditions" className="hover:text-foreground transition-colors">
+          <span className="px-2">|</span>
+          <Link to="/terms-and-conditions" className="hover:text-foreground">
             Terms & Conditions
           </Link>
         </div>

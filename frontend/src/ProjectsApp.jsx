@@ -73,12 +73,6 @@ export default function ProjectsApp() {
   const navigate = useNavigate();
   const { projectId: routeProjectId, chatId: routeChatId } = useParams();
 
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    return (
-      localStorage.getItem('theme') === 'dark' ||
-      (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)
-    );
-  });
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => getInitialSidebarOpen());
 
   const [projects, setProjects] = useState([]);
@@ -117,16 +111,6 @@ export default function ProjectsApp() {
       .filter((file) => attachedSet.has(file.id))
       .map((file) => ({ id: file.id, name: file.filename }));
   }, [files, attachedFileIds]);
-
-  useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
-  }, [isDarkMode]);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && window.innerWidth >= 768) {
@@ -705,16 +689,14 @@ export default function ProjectsApp() {
           onToggleIncludePreviousChats={handleToggleIncludePreviousChats}
           onExport={handleExport}
           onShare={handleShare}
-          isDarkMode={isDarkMode}
-          onToggleDarkMode={() => setIsDarkMode((previous) => !previous)}
         />
 
         {statusMessage.text && (
           <div
-            className={`mx-4 mt-3 inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
+            className={`mx-4 mt-3 inline-flex items-center gap-2 rounded-2xl border px-3 py-2 text-sm ${
               statusMessage.type === 'success'
-                ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                : 'border-red-500/20 bg-red-500/10 text-red-600 dark:text-red-400'
+                ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700'
+                : 'border-red-500/20 bg-red-500/10 text-red-600'
             }`}
           >
             <AlertCircle size={16} />
@@ -741,11 +723,11 @@ export default function ProjectsApp() {
           <button
             type="button"
             onClick={() => setIsFilesPanelOpen(false)}
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            className="absolute inset-0 bg-slate-900/20"
             aria-label="Close project files drawer"
           />
 
-          <div className="absolute right-0 top-0 h-full w-full max-w-md border-l border-border bg-background shadow-2xl">
+          <div className="absolute right-0 top-0 h-full w-full max-w-md border-l border-border bg-background shadow-[0_12px_36px_rgba(15,23,42,0.12)]">
             <ProjectFilesPanel
               files={files}
               attachedFileIds={attachedFileIds}

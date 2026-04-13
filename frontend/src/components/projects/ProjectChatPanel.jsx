@@ -69,11 +69,11 @@ export function ProjectChatPanel({
   }, [messages, isStreaming]);
 
   return (
-    <section className="surface-panel m-3 mt-0 flex min-h-0 flex-1 flex-col md:m-4 md:mt-0">
+    <section className="panel-card m-3 mt-0 flex min-h-0 flex-1 flex-col md:m-4 md:mt-0">
       <div className="min-h-0 flex-1 overflow-y-auto">
         {messages.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center px-6 text-center">
-            <div className="mb-3 rounded-2xl border border-primary/20 bg-primary/10 p-3 text-primary">
+            <div className="mb-3 rounded-2xl bg-accent p-3 text-accent-foreground">
               <Bot size={22} />
             </div>
             <h2 className="text-lg font-semibold text-foreground">Start a project conversation</h2>
@@ -89,7 +89,7 @@ export function ProjectChatPanel({
         )}
       </div>
 
-      <div className="border-t border-border/70 bg-background/92 p-3 md:p-4">
+      <div className="border-t border-border/70 bg-background p-3 md:p-4">
         <InputBar
           onSendMessage={onSendMessage}
           isProcessing={isStreaming || disabled}

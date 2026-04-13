@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { Copy, Check, User, Bot } from 'lucide-react';
+import { Bot, Check, Copy, User } from 'lucide-react';
 
 export function MessageBubble({ message }) {
   const isAI = message.role === 'ai';
@@ -15,41 +15,27 @@ export function MessageBubble({ message }) {
   };
 
   return (
-    <div className={`group w-full px-4 py-4 animate-fade-in ${isAI ? 'border-b border-border/50 bg-muted/20' : ''}`}>
-      <div className="max-w-4xl mx-auto flex gap-4">
-        {/* Avatar */}
-        <div className="flex-none mt-0.5">
-          <div className={`
-            w-8 h-8 rounded-full flex items-center justify-center shrink-0 border shadow-sm
-            ${isAI
-              ? 'border-primary/25 bg-primary/12 text-primary'
-              : 'border-border bg-secondary text-secondary-foreground'
-            }
-          `}>
+    <div className={`group w-full px-4 py-4 animate-fade-in ${isAI ? 'bg-muted/35' : ''}`}>
+      <div className="mx-auto flex max-w-4xl gap-4">
+        <div className="mt-0.5">
+          <div
+            className={`flex h-9 w-9 items-center justify-center rounded-full border ${
+              isAI
+                ? 'border-primary/15 bg-accent text-accent-foreground'
+                : 'border-border bg-card text-foreground'
+            }`}
+          >
             {isAI ? <Bot size={16} /> : <User size={16} />}
           </div>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="font-semibold text-sm text-foreground">
-              {isAI ? 'Miety AI' : 'You'}
-            </span>
-            <span className="text-xs text-muted-foreground">
-              {formatTime(message.timestamp)}
-            </span>
+        <div className="min-w-0 flex-1">
+          <div className="mb-2 flex items-center gap-2">
+            <span className="text-sm font-semibold text-foreground">{isAI ? 'Miety AI' : 'You'}</span>
+            <span className="text-xs text-muted-foreground">{formatTime(message.timestamp)}</span>
           </div>
 
-          <div className={`
-            prose prose-sm dark:prose-invert max-w-none
-            text-foreground leading-relaxed
-            prose-p:my-1 prose-headings:font-semibold prose-headings:mt-3 prose-headings:mb-2
-            prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5
-            prose-pre:bg-muted/50 prose-pre:border prose-pre:border-border
-            prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
-            prose-a:text-primary prose-a:no-underline hover:prose-a:underline
-          `}>
+          <div className="prose prose-sm max-w-none text-foreground leading-relaxed prose-p:my-1 prose-headings:mb-2 prose-headings:mt-3 prose-headings:font-semibold prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-pre:border prose-pre:border-border prose-pre:bg-card prose-code:rounded prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-a:text-primary prose-a:no-underline hover:prose-a:underline">
             {isAI ? (
               <ReactMarkdown
                 components={{
@@ -62,14 +48,14 @@ export function MessageBubble({ message }) {
                         style={vscDarkPlus}
                         language={match[1]}
                         PreTag="div"
-                        wrapLines={true}
-                        wrapLongLines={true}
+                        wrapLines
+                        wrapLongLines
                         customStyle={{
                           margin: '0.5rem 0',
                           padding: '1rem',
-                          borderRadius: '0.5rem',
-                          background: 'hsl(var(--muted) / 0.5)',
-                          fontSize: '0.875rem'
+                          borderRadius: '0.9rem',
+                          background: 'rgba(226, 232, 240, 0.65)',
+                          fontSize: '0.875rem',
                         }}
                       />
                     ) : (
@@ -83,22 +69,20 @@ export function MessageBubble({ message }) {
                 {message.content}
               </ReactMarkdown>
             ) : (
-              <div className="whitespace-pre-wrap">{message.content}</div>
+              <div className="whitespace-pre-wrap text-sm leading-6">{message.content}</div>
             )}
           </div>
 
-          {/* Copy button for AI messages */}
-          {isAI && (
+          {isAI ? (
             <button
+              type="button"
               onClick={handleCopy}
-              className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground
-                opacity-0 group-hover:opacity-100 hover:text-foreground
-                transition-all duration-200"
+              className="mt-3 inline-flex items-center gap-1.5 text-xs text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100"
             >
               {copied ? (
                 <>
-                  <Check size={14} className="text-green-500" />
-                  <span className="text-green-500">Copied!</span>
+                  <Check size={14} className="text-primary" />
+                  <span className="text-primary">Copied</span>
                 </>
               ) : (
                 <>
@@ -107,7 +91,7 @@ export function MessageBubble({ message }) {
                 </>
               )}
             </button>
-          )}
+          ) : null}
         </div>
       </div>
     </div>
@@ -115,11 +99,14 @@ export function MessageBubble({ message }) {
 }
 
 function formatTime(timestamp) {
-  if (!timestamp) return '';
+  if (!timestamp) {
+    return '';
+  }
+
   const date = new Date(timestamp);
   return date.toLocaleTimeString('en-US', {
     hour: 'numeric',
     minute: '2-digit',
-    hour12: true
+    hour12: true,
   });
 }

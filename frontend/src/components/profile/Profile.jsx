@@ -160,29 +160,32 @@ const Profile = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="h-14 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-10">
-        <div className="container mx-auto px-4 h-full flex items-center justify-between">
-          <div className="font-semibold text-lg bg-clip-text text-transparent bg-gradient-to-r from-primary to-ring">
-            Miety AI
+      <header className="sticky top-0 z-10 border-b border-border bg-background">
+        <div className="mx-auto flex h-16 max-w-2xl items-center justify-between px-4">
+          <div className="flex items-center gap-3">
+            <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-accent text-sm font-bold text-accent-foreground">
+              M
+            </span>
+            <div>
+              <p className="text-base font-semibold text-foreground">Profile</p>
+              <p className="text-sm text-muted-foreground">Account details and password</p>
+            </div>
           </div>
           <button
             onClick={() => navigate('/')}
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="rounded-2xl border border-border bg-card px-4 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
           >
             Back to Chat
           </button>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-8 max-w-2xl">
-        <div className="bg-card rounded-2xl border border-border shadow-lg overflow-hidden">
-          {/* Profile Header */}
-          <div className="relative h-32 bg-gradient-to-r from-primary/20 to-accent/20">
+      <main className="mx-auto max-w-2xl px-4 py-8">
+        <div className="panel-card overflow-hidden">
+          <div className="relative h-28 bg-muted/55">
             <div className="absolute -bottom-16 left-8">
               <div className="relative">
-                <div className="w-32 h-32 rounded-full border-4 border-card bg-muted overflow-hidden">
+                <div className="h-32 w-32 overflow-hidden rounded-full border-4 border-card bg-card">
                   {previewImage ? (
                     <img src={previewImage} alt="Profile" className="w-full h-full object-cover" />
                   ) : (
@@ -194,7 +197,7 @@ const Profile = () => {
                 {isEditing && (
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="absolute bottom-0 right-0 p-2 bg-primary text-primary-foreground rounded-full shadow-lg hover:bg-primary/90 transition-colors"
+                    className="absolute bottom-0 right-0 rounded-full bg-primary p-2 text-primary-foreground shadow-sm hover:bg-primary/90"
                     title="Change profile picture"
                   >
                     <Camera size={16} />
@@ -204,7 +207,6 @@ const Profile = () => {
             </div>
           </div>
 
-          {/* Hidden file input */}
           <input
             ref={fileInputRef}
             type="file"
@@ -213,14 +215,12 @@ const Profile = () => {
             className="hidden"
           />
 
-          {/* Profile Info */}
-          <div className="pt-20 pb-8 px-8">
-            {/* Action Bar */}
-            <div className="flex justify-end gap-2 mb-6">
+          <div className="px-8 pb-8 pt-4">
+            <div className="mb-6 flex justify-end gap-2">
               {!isEditing ? (
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="px-4 py-2 text-sm font-medium text-primary border border-primary rounded-lg hover:bg-primary/10 transition-colors"
+                  className="secondary-button"
                 >
                   Edit Profile
                 </button>
@@ -228,7 +228,7 @@ const Profile = () => {
                 <>
                   <button
                     onClick={handleCancel}
-                    className="px-4 py-2 text-sm font-medium text-muted-foreground border border-border rounded-lg hover:bg-muted transition-colors"
+                    className="secondary-button"
                   >
                     <X size={16} className="inline-block mr-1" />
                     Cancel
@@ -236,7 +236,7 @@ const Profile = () => {
                   <button
                     onClick={handleSave}
                     disabled={isSaving}
-                    className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-lg hover:bg-primary/90 disabled:opacity-50 transition-colors"
+                    className="primary-button disabled:opacity-50"
                   >
                     <Save size={16} className="inline-block mr-1" />
                     {isSaving ? 'Saving...' : 'Save Changes'}
@@ -245,9 +245,8 @@ const Profile = () => {
               )}
             </div>
 
-            {/* Message */}
             {message.text && (
-              <div className={`mb-6 p-4 rounded-lg text-sm ${
+              <div className={`mb-6 rounded-2xl p-4 text-sm ${
                 message.type === 'success'
                   ? 'bg-green-500/10 border border-green-500/20 text-green-500'
                   : 'bg-red-500/10 border border-red-500/20 text-red-500'
@@ -256,20 +255,17 @@ const Profile = () => {
               </div>
             )}
 
-            {/* Form Fields */}
-            <div className="space-y-6">
-              {/* Email (Read-only) */}
+            <div className="space-y-4">
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-2">
                   <Mail size={16} />
                   Email Address
                 </label>
-                <div className="px-4 py-3 bg-muted rounded-lg text-foreground">
+                <div className="rounded-2xl bg-muted/55 px-4 py-3 text-foreground">
                   {user?.email || 'N/A'}
                 </div>
               </div>
 
-              {/* Name */}
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-2">
                   <User size={16} />
@@ -282,16 +278,15 @@ const Profile = () => {
                     value={formData.name}
                     onChange={handleInputChange}
                     placeholder="Enter your full name"
-                    className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                    className="soft-input"
                   />
                 ) : (
-                  <div className="px-4 py-3 bg-muted rounded-lg text-foreground">
+                  <div className="rounded-2xl bg-muted/55 px-4 py-3 text-foreground">
                     {formData.name || 'Not set'}
                   </div>
                 )}
               </div>
 
-              {/* College ID */}
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-2">
                   <IdCard size={16} />
@@ -304,16 +299,15 @@ const Profile = () => {
                     value={formData.college_id}
                     onChange={handleInputChange}
                     placeholder="e.g., 2023BCA001"
-                    className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                    className="soft-input"
                   />
                 ) : (
-                  <div className="px-4 py-3 bg-muted rounded-lg text-foreground">
+                  <div className="rounded-2xl bg-muted/55 px-4 py-3 text-foreground">
                     {formData.college_id || 'Not set'}
                   </div>
                 )}
               </div>
 
-              {/* Section */}
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-2">
                   <Layers size={16} />
@@ -324,7 +318,7 @@ const Profile = () => {
                     name="section"
                     value={formData.section}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                    className="soft-input"
                   >
                     <option value="">Select Section</option>
                     <option value="A">Section A</option>
@@ -334,13 +328,12 @@ const Profile = () => {
                     <option value="E">Section E</option>
                   </select>
                 ) : (
-                  <div className="px-4 py-3 bg-muted rounded-lg text-foreground">
+                  <div className="rounded-2xl bg-muted/55 px-4 py-3 text-foreground">
                     {formData.section ? `Section ${formData.section}` : 'Not set'}
                   </div>
                 )}
               </div>
 
-              {/* Semester */}
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-2">
                   <GraduationCap size={16} />
@@ -351,7 +344,7 @@ const Profile = () => {
                     name="semester"
                     value={formData.semester}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                    className="soft-input"
                   >
                     <option value="">Select Semester</option>
                     <option value="1">Semester 1</option>
@@ -364,13 +357,12 @@ const Profile = () => {
                     <option value="8">Semester 8</option>
                   </select>
                 ) : (
-                  <div className="px-4 py-3 bg-muted rounded-lg text-foreground">
+                  <div className="rounded-2xl bg-muted/55 px-4 py-3 text-foreground">
                     {formData.semester ? `Semester ${formData.semester}` : 'Not set'}
                   </div>
                 )}
               </div>
 
-              {/* Project */}
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-2">
                   <Briefcase size={16} />
@@ -383,18 +375,17 @@ const Profile = () => {
                     onChange={handleInputChange}
                     placeholder="Enter your current project title or details"
                     rows={3}
-                    className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                    className="soft-input min-h-28"
                   />
                 ) : (
-                  <div className="px-4 py-3 bg-muted rounded-lg text-foreground whitespace-pre-wrap">
+                  <div className="rounded-2xl bg-muted/55 px-4 py-3 text-foreground whitespace-pre-wrap">
                     {formData.project || 'Not set'}
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Change Password */}
-            <div className="mt-8 pt-6 border-t border-border">
+            <div className="mt-8 border-t border-border pt-6">
               <h3 className="text-lg font-semibold text-foreground mb-2">Change Password</h3>
               <p className="text-sm text-muted-foreground mb-4">
                 Keep your account secure by updating your password regularly.
@@ -413,7 +404,7 @@ const Profile = () => {
                     onChange={handlePasswordInputChange}
                     autoComplete="current-password"
                     placeholder="Enter current password"
-                    className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                    className="soft-input"
                   />
                 </div>
 
@@ -429,7 +420,7 @@ const Profile = () => {
                     onChange={handlePasswordInputChange}
                     autoComplete="new-password"
                     placeholder="Enter new password"
-                    className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                    className="soft-input"
                   />
                 </div>
 
@@ -445,14 +436,14 @@ const Profile = () => {
                     onChange={handlePasswordInputChange}
                     autoComplete="new-password"
                     placeholder="Confirm new password"
-                    className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                    className="soft-input"
                   />
                 </div>
 
                 <button
                   onClick={handleChangePassword}
                   disabled={isChangingPassword}
-                  className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-lg hover:bg-primary/90 disabled:opacity-50 transition-colors"
+                  className="primary-button mt-6 w-auto disabled:opacity-50"
                 >
                   {isChangingPassword ? 'Updating Password...' : 'Update Password'}
                 </button>
@@ -461,8 +452,7 @@ const Profile = () => {
           </div>
         </div>
 
-        {/* Additional Info */}
-        <div className="mt-6 p-4 bg-muted/50 rounded-lg border border-border text-sm text-muted-foreground text-center">
+        <div className="mt-6 rounded-2xl border border-border bg-card px-4 py-4 text-center text-sm text-muted-foreground">
           Your profile information helps us personalize your learning experience.
         </div>
       </main>

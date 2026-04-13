@@ -191,7 +191,7 @@ export function GroupMessageBubble({
             {message.is_edited && <span className="text-[11px] text-muted-foreground">edited</span>}
           </div>
 
-          <div className="prose prose-sm dark:prose-invert max-w-none text-foreground leading-relaxed prose-p:my-1 prose-headings:font-semibold prose-headings:mt-3 prose-headings:mb-2 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-pre:bg-muted/60 prose-pre:border prose-pre:border-border prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-a:text-primary prose-a:no-underline hover:prose-a:underline">
+          <div className="prose prose-sm max-w-none text-foreground leading-relaxed prose-p:my-1 prose-headings:font-semibold prose-headings:mt-3 prose-headings:mb-2 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-pre:bg-card prose-pre:border prose-pre:border-border prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-a:text-primary prose-a:no-underline hover:prose-a:underline">
             {message.reply_to && repliedMessage && (
               <div className="mb-2 rounded-xl border border-border bg-muted/40 px-3 py-2 text-xs not-prose">
                 <p className="font-medium text-muted-foreground">
