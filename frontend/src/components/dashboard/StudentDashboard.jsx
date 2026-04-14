@@ -49,13 +49,13 @@ function StatCard({ title, value, icon, accentClass }) {
   const IconComponent = icon;
 
   return (
-    <article className="rounded-2xl border border-border/80 bg-card/90 p-4 shadow-sm">
+    <article className="panel-card p-5">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">{title}</p>
+          <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">{title}</p>
           <p className="mt-2 text-2xl font-semibold text-foreground">{value}</p>
         </div>
-        <div className={`rounded-xl p-2 ${accentClass}`}>
+        <div className="rounded p-2 bg-primary/10 text-primary">
           <IconComponent size={18} />
         </div>
       </div>
@@ -129,7 +129,7 @@ export default function StudentDashboard() {
   return (
     <div className="min-h-screen bg-background px-4 py-6">
       <div className="mx-auto max-w-6xl space-y-6">
-        <header className="rounded-2xl border border-border/80 bg-card/90 p-5 shadow-sm">
+        <header className="panel-card p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Student Dashboard</p>
@@ -144,10 +144,10 @@ export default function StudentDashboard() {
             </div>
 
             <nav className="flex flex-wrap gap-2 text-sm">
-              <Link className="rounded-lg border border-border px-3 py-2 hover:bg-muted" to="/">Chat</Link>
-              <Link className="rounded-lg border border-border px-3 py-2 hover:bg-muted" to="/projects">Projects</Link>
-              <Link className="rounded-lg border border-border px-3 py-2 hover:bg-muted" to="/groups">Groups</Link>
-              <Link className="rounded-lg border border-border px-3 py-2 hover:bg-muted" to="/profile">Profile</Link>
+              <Link className="secondary-button !rounded-2xl !px-3 !py-2" to="/">Chat</Link>
+              <Link className="secondary-button !rounded-2xl !px-3 !py-2" to="/projects">Projects</Link>
+              <Link className="secondary-button !rounded-2xl !px-3 !py-2" to="/groups">Groups</Link>
+              <Link className="secondary-button !rounded-2xl !px-3 !py-2" to="/profile">Profile</Link>
             </nav>
           </div>
         </header>
@@ -157,33 +157,33 @@ export default function StudentDashboard() {
             title="Latest SGPA"
             value={formatMetric(dashboard?.results_summary?.latest_sgpa)}
             icon={TrendingUp}
-            accentClass="bg-emerald-500/15 text-emerald-600"
+            accentClass="bg-accent text-accent-foreground"
           />
           <StatCard
             title="CGPA"
             value={formatMetric(dashboard?.results_summary?.cgpa)}
             icon={Target}
-            accentClass="bg-sky-500/15 text-sky-600"
+            accentClass="bg-accent text-accent-foreground"
           />
           <StatCard
             title="Attendance"
             value={attendance === null || attendance === undefined ? 'N/A' : `${attendance.toFixed(1)}%`}
             icon={Activity}
-            accentClass="bg-amber-500/15 text-amber-600"
+            accentClass="bg-accent text-accent-foreground"
           />
           <StatCard
             title="Pending Tasks"
             value={String(pendingTasks.length)}
             icon={CalendarClock}
-            accentClass="bg-rose-500/15 text-rose-600"
+            accentClass="bg-accent text-accent-foreground"
           />
         </section>
 
         <section className="grid gap-4 lg:grid-cols-3">
-          <article className="rounded-2xl border border-border/80 bg-card/90 p-4 shadow-sm lg:col-span-2">
+          <article className="panel-card p-5 lg:col-span-2">
             <div className="mb-4 flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-semibold text-foreground">Performance Trend</h2>
+                <h2 className="text-base font-semibold text-foreground">Performance Trend</h2>
                 <p className="text-sm text-muted-foreground">Semester-wise SGPA progression</p>
               </div>
               <LineChart className="text-primary" size={20} />
@@ -226,8 +226,8 @@ export default function StudentDashboard() {
             )}
           </article>
 
-          <article className="rounded-2xl border border-border/80 bg-card/90 p-4 shadow-sm">
-            <h2 className="text-lg font-semibold text-foreground">Insights</h2>
+          <article className="panel-card p-5">
+            <h2 className="text-base font-semibold text-foreground">Insights</h2>
             <p className="mb-3 text-sm text-muted-foreground">Actionable academic recommendations</p>
 
             {dashboard?.insights?.length ? (
@@ -251,8 +251,8 @@ export default function StudentDashboard() {
         </section>
 
         <section className="grid gap-4 lg:grid-cols-2">
-          <article className="rounded-2xl border border-border/80 bg-card/90 p-4 shadow-sm">
-            <h2 className="text-lg font-semibold text-foreground">Subject Comparison</h2>
+          <article className="panel-card p-5">
+            <h2 className="text-base font-semibold text-foreground">Subject Comparison</h2>
             <p className="mb-3 text-sm text-muted-foreground">Latest semester subject-level performance</p>
 
             {dashboard?.empty_states?.results ? (
@@ -279,8 +279,8 @@ export default function StudentDashboard() {
             )}
           </article>
 
-          <article className="rounded-2xl border border-border/80 bg-card/90 p-4 shadow-sm">
-            <h2 className="text-lg font-semibold text-foreground">Pending Tasks</h2>
+          <article className="panel-card p-5">
+            <h2 className="text-base font-semibold text-foreground">Pending Tasks</h2>
             <p className="mb-3 text-sm text-muted-foreground">Assignments, submissions, and prep reminders</p>
 
             {pendingTasks.length ? (
@@ -313,7 +313,7 @@ export default function StudentDashboard() {
           </article>
         </section>
 
-        <footer className="rounded-2xl border border-border/70 bg-card/80 p-4 text-sm text-muted-foreground">
+        <footer className="panel-card p-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <BookCheck size={16} />
             Academic dashboard refreshes with latest records maintained by faculty/admin.

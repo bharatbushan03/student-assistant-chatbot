@@ -83,13 +83,13 @@ function SettingRow({
       <div className="flex min-w-0 items-center gap-3">
         <div
           className={`flex h-8 w-8 items-center justify-center rounded-lg ${
-            destructive ? 'bg-red-500/10 text-red-600 dark:text-red-300' : 'bg-muted/80 text-muted-foreground'
+            destructive ? 'bg-red-500/10 text-red-600' : 'bg-muted/80 text-muted-foreground'
           }`}
         >
           <RowIcon size={14} />
         </div>
         <div className="min-w-0">
-          <p className={`text-sm font-medium ${destructive ? 'text-red-600 dark:text-red-400' : 'text-foreground'}`}>
+          <p className={`text-sm font-medium ${destructive ? 'text-red-600' : 'text-foreground'}`}>
             {label}
           </p>
           {description ? <p className="text-xs text-muted-foreground">{description}</p> : null}
@@ -386,7 +386,7 @@ export function GroupDetailsScreen({
                   <ArrowLeft size={16} />
                 </button>
 
-                <div className={`rounded-full bg-gradient-to-br p-[2px] ${isMuted ? 'from-muted-foreground/55 to-muted-foreground/35' : 'from-primary/80 to-primary/40'}`}>
+                <div className="rounded-full border border-border bg-card p-0.5">
                   {group.avatar_url ? (
                     <img
                       src={group.avatar_url}
@@ -421,7 +421,7 @@ export function GroupDetailsScreen({
             </div>
           </div>
 
-          <div className="flex-1 space-y-6 overflow-y-auto bg-gradient-to-b from-background/96 via-background to-background px-4 py-4 md:px-6 md:py-5">
+          <div className="flex-1 space-y-6 overflow-y-auto bg-background px-4 py-4 md:px-6 md:py-5">
             <section className="rounded-2xl border border-border/80 bg-card/80 p-3 shadow-sm">
               <SectionTitle title="Quick Actions" subtitle="Audio, video, add, and search with one tap." />
               <div className="flex flex-wrap gap-2">

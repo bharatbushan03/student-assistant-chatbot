@@ -1,8 +1,8 @@
-import React, { useState, useContext } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useContext, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { CheckCircle2, UserPlus } from 'lucide-react';
 import { AuthContext } from '../../context/AuthContext';
 import api from '../../utils/api';
-import { UserPlus, Mail, Lock, Key, CheckCircle, School, ShieldCheck } from 'lucide-react';
 
 const STUDENT_EMAIL_REGEX = /^[a-z0-9]+@mietjammu\.in$/;
 
@@ -17,24 +17,30 @@ const Signup = () => {
   const { loginContext } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  const handleSignup = async (e) => {
-    e.preventDefault();
+  const handleSignup = async (event) => {
+    event.preventDefault();
     setError(null);
 
     const normalizedEmail = email.trim().toLowerCase();
 
     if (mode !== 'student') {
-      return setError('Faculty/Admin accounts are provisioned by system administrators only.');
+      setError('Faculty/Admin accounts are provisioned by system administrators only.');
+      return;
     }
 
     if (!STUDENT_EMAIL_REGEX.test(normalizedEmail)) {
-      return setError('Student email must follow format yourrollno@mietjammu.in.');
+      setError('Student email must follow format yourrollno@mietjammu.in.');
+      return;
     }
+
     if (password.length < 8) {
-      return setError('Password must be at least 8 characters long.');
+      setError('Password must be at least 8 characters long.');
+      return;
     }
+
     if (password !== confirmPassword) {
-      return setError('Passwords do not match.');
+      setError('Passwords do not match.');
+      return;
     }
 
     setIsSubmitting(true);
@@ -43,17 +49,12 @@ const Signup = () => {
       if (data.success) {
         loginContext(data.user, data.token);
         const role = (data.user?.role || 'student').toLowerCase();
-        if (role === 'student') {
-          navigate('/student/dashboard');
-        } else {
-          navigate('/faculty/dashboard');
-        }
+        navigate(role === 'student' ? '/student/dashboard' : '/faculty/dashboard');
       }
     } catch (err) {
       if (!err.response) {
         setError('Could not connect to the server. Please check your connection.');
       } else {
-        // Backend returns {detail: "..."} not {message: "..."}
         setError(err.response.data?.detail || err.response.data?.message || 'An error occurred during registration.');
       }
     } finally {
@@ -64,182 +65,133 @@ const Signup = () => {
   const passwordRequirements = [
     { label: 'At least 8 characters', met: password.length >= 8 },
   ];
-  const emailPlaceholder =
-    mode === 'faculty_admin' ? 'yourname.dept@mietjammu.in' : 'yourrollno@mietjammu.in';
-  const emailHint =
-    mode === 'faculty_admin'
-      ? 'Faculty/Admin format: yourname.dept@mietjammu.in'
-      : 'Student format: yourrollno@mietjammu.in';
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md relative">
-        {/* Card */}
-        <div className="rounded-2xl border border-border bg-card/95 p-8 shadow-[0_18px_50px_-24px_hsl(var(--foreground)/0.3)] backdrop-blur">
-          {/* Logo and Title */}
-          <div className="text-center mb-8">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-primary/20 bg-primary/12">
-              <UserPlus size={26} className="text-primary" />
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-50 to-slate-100 dark:from-background dark:to-background px-4 py-8">
+      <div className="w-full max-w-md">
+        <div className="panel-card p-8 shadow-md rounded-[12px]">
+          <div className="text-center mb-6">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-primary/10 text-primary mb-4">
+              <UserPlus size={24} />
             </div>
-            <h2 className="text-2xl font-bold text-foreground mb-1">
-              Create Account
-            </h2>
-            <p className="text-muted-foreground text-sm">
-              Join Miety AI with your MIET email
-            </p>
+            <h1 className="text-2xl font-bold text-foreground">Create Account</h1>
+            <p className="mt-1 text-sm text-muted-foreground">Use your MIET email to open a student account.</p>
           </div>
 
-          {/* Error Message */}
-          {error && (
-            <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 text-destructive rounded-lg text-sm text-center">
-              {error}
-            </div>
-          )}
-
-          {/* Form */}
-          <form onSubmit={handleSignup} className="space-y-5">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Signup Mode</label>
-              <div className="grid grid-cols-2 gap-2 rounded-xl border border-border bg-background p-1">
+          <form onSubmit={handleSignup} className="space-y-4">
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-foreground">Signup Mode</label>
+              <div className="grid grid-cols-2 gap-2 rounded-3xl bg-muted p-1">
                 <button
                   type="button"
                   onClick={() => setMode('student')}
-                  className={`flex items-center justify-center gap-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  className={`rounded-[1.1rem] px-4 py-3 text-sm font-semibold ${
                     mode === 'student'
                       ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:bg-muted'
+                      : 'text-muted-foreground hover:bg-card hover:text-foreground'
                   }`}
                 >
-                  <School size={14} />
                   Student
                 </button>
                 <button
                   type="button"
                   onClick={() => setMode('faculty_admin')}
-                  className={`flex items-center justify-center gap-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  className={`rounded-[1.1rem] px-4 py-3 text-sm font-semibold ${
                     mode === 'faculty_admin'
                       ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:bg-muted'
+                      : 'text-muted-foreground hover:bg-card hover:text-foreground'
                   }`}
                 >
-                  <ShieldCheck size={14} />
                   Faculty/Admin
                 </button>
               </div>
-              {mode === 'faculty_admin' && (
-                <p className="text-xs text-amber-600">
-                  Faculty/Admin registration is invite-based and not available through public signup.
+              {mode === 'faculty_admin' ? (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Faculty/Admin signup is not available from this screen.
                 </p>
-              )}
+              ) : null}
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                <Mail size={14} className="text-muted-foreground" />
-                MIET Email Address
-              </label>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-foreground">MIET Email</label>
               <input
                 type="email"
                 required
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder={emailPlaceholder}
-                className="w-full px-4 py-3 bg-background border border-border rounded-xl
-                  text-foreground placeholder:text-muted-foreground
-                  focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary
-                  transition-all duration-200"
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="yourrollno@mietjammu.in"
+                className="soft-input"
               />
-              <p className="text-xs text-muted-foreground">
-                {emailHint}
-              </p>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                <Lock size={14} className="text-muted-foreground" />
-                Password
-              </label>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-foreground">Password</label>
               <input
                 type="password"
                 required
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Create a strong password"
-                className="w-full px-4 py-3 bg-background border border-border rounded-xl
-                  text-foreground placeholder:text-muted-foreground
-                  focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary
-                  transition-all duration-200"
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder="Create a password"
+                className="soft-input"
               />
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                <Key size={14} className="text-muted-foreground" />
-                Confirm Password
-              </label>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-foreground">Confirm Password</label>
               <input
                 type="password"
                 required
                 value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                onChange={(event) => setConfirmPassword(event.target.value)}
                 placeholder="Re-enter your password"
-                className="w-full px-4 py-3 bg-background border border-border rounded-xl
-                  text-foreground placeholder:text-muted-foreground
-                  focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary
-                  transition-all duration-200"
+                className="soft-input"
               />
             </div>
 
-            {/* Password requirements */}
-            <div className="pt-2">
-              <p className="text-xs font-medium text-muted-foreground mb-2">Password requirements:</p>
-              <div className="space-y-1">
-                {passwordRequirements.map((req, index) => (
-                  <div key={index} className="flex items-center gap-2 text-xs">
-                    <CheckCircle
-                      size={14}
-                      className={req.met ? 'text-green-500' : 'text-muted-foreground'}
+            <div className="rounded-2xl bg-muted/55 px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                Password rule
+              </p>
+              <div className="mt-2 space-y-2">
+                {passwordRequirements.map((requirement) => (
+                  <div key={requirement.label} className="flex items-center gap-2 text-sm">
+                    <CheckCircle2
+                      size={16}
+                      className={requirement.met ? 'text-primary' : 'text-muted-foreground'}
                     />
-                    <span className={req.met ? 'text-green-500' : 'text-muted-foreground'}>
-                      {req.label}
+                    <span className={requirement.met ? 'text-foreground' : 'text-muted-foreground'}>
+                      {requirement.label}
                     </span>
                   </div>
                 ))}
               </div>
             </div>
 
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full py-3 px-4 bg-primary
-                text-primary-foreground font-semibold rounded-xl
-                hover:bg-primary/90
-                disabled:opacity-50 disabled:cursor-not-allowed
-                transition-colors duration-200 shadow-sm"
-            >
-              {isSubmitting ? 'Creating Account...' : 'Sign Up'}
+            {error ? (
+              <div className="rounded-2xl border border-destructive/15 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                {error}
+              </div>
+            ) : null}
+
+            <button type="submit" disabled={isSubmitting} className="primary-button w-full mt-2">
+              {isSubmitting ? 'Creating account...' : 'Sign Up'}
             </button>
           </form>
 
-          {/* Footer */}
-          <p className="mt-8 text-center text-sm text-muted-foreground">
+          <p className="mt-4 text-center text-sm text-muted-foreground">
             Already have an account?{' '}
-            <Link
-              to="/login"
-              className="text-primary font-medium hover:underline transition-colors"
-            >
-              Sign in
+            <Link to="/login" className="font-semibold text-primary hover:underline">
+              Sign In
             </Link>
           </p>
         </div>
 
-        {/* Legal links */}
-        <div className="mt-6 flex justify-center gap-4 text-xs text-muted-foreground">
-          <Link to="/privacy-policy" className="hover:text-foreground transition-colors">
+        <div className="mt-5 text-center text-sm text-muted-foreground">
+          <Link to="/privacy-policy" className="hover:text-foreground">
             Privacy Policy
           </Link>
-          <span>•</span>
-          <Link to="/terms-and-conditions" className="hover:text-foreground transition-colors">
+          <span className="px-2">|</span>
+          <Link to="/terms-and-conditions" className="hover:text-foreground">
             Terms & Conditions
           </Link>
         </div>

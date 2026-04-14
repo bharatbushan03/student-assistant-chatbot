@@ -13,7 +13,7 @@ export function ProjectFilesPanel({
   className = '',
 }) {
   return (
-    <aside className={`flex h-full w-full flex-col border-border bg-card/50 ${className}`}>
+    <aside className={`flex h-full w-full flex-col border-border bg-card ${className}`}>
       <div className="border-b border-border p-4">
         <div className="mb-2 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
@@ -35,7 +35,7 @@ export function ProjectFilesPanel({
           ) : null}
         </div>
 
-        <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90">
+        <label className="inline-flex cursor-pointer items-center gap-2 rounded-2xl bg-primary px-3 py-2 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90">
           <FilePlus2 size={14} />
           {isUploading ? 'Uploading...' : 'Upload files'}
           <input
@@ -61,7 +61,7 @@ export function ProjectFilesPanel({
         {files.map((file) => {
           const attached = attachedFileIds.includes(file.id);
           return (
-            <div key={file.id} className="rounded-lg border border-border bg-card p-3">
+            <div key={file.id} className="rounded-2xl border border-border bg-muted/25 p-3">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-foreground">{file.filename}</p>

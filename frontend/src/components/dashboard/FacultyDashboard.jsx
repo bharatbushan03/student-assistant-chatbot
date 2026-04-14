@@ -263,7 +263,7 @@ export default function FacultyDashboard() {
   return (
     <div className="min-h-screen bg-background px-4 py-6">
       <div className="mx-auto max-w-7xl space-y-6">
-        <header className="rounded-2xl border border-border/80 bg-card/90 p-5 shadow-sm">
+        <header className="panel-card p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Faculty/Admin Panel</p>
@@ -273,15 +273,15 @@ export default function FacultyDashboard() {
               </p>
             </div>
             <nav className="flex flex-wrap gap-2 text-sm">
-              <Link className="rounded-lg border border-border px-3 py-2 hover:bg-muted" to="/">Chat</Link>
-              <Link className="rounded-lg border border-border px-3 py-2 hover:bg-muted" to="/projects">Projects</Link>
-              <Link className="rounded-lg border border-border px-3 py-2 hover:bg-muted" to="/groups">Groups</Link>
-              <Link className="rounded-lg border border-border px-3 py-2 hover:bg-muted" to="/profile">Profile</Link>
+              <Link className="secondary-button !rounded-2xl !px-3 !py-2" to="/">Chat</Link>
+              <Link className="secondary-button !rounded-2xl !px-3 !py-2" to="/projects">Projects</Link>
+              <Link className="secondary-button !rounded-2xl !px-3 !py-2" to="/groups">Groups</Link>
+              <Link className="secondary-button !rounded-2xl !px-3 !py-2" to="/profile">Profile</Link>
             </nav>
           </div>
         </header>
 
-        <section className="rounded-2xl border border-border/80 bg-card/90 p-4 shadow-sm">
+        <section className="panel-card p-5">
           <form onSubmit={handleFilterSubmit} className="grid gap-3 md:grid-cols-4">
             <label className="text-sm md:col-span-1">
               <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-muted-foreground">Student ID</span>
@@ -326,10 +326,10 @@ export default function FacultyDashboard() {
         </section>
 
         <section className="grid gap-4 lg:grid-cols-5">
-          <article className="rounded-2xl border border-border/80 bg-card/90 p-4 shadow-sm lg:col-span-2">
+          <article className="panel-card p-5 lg:col-span-2">
             <div className="mb-3 flex items-center gap-2">
               <Users size={18} className="text-primary" />
-              <h2 className="text-lg font-semibold text-foreground">Student Records</h2>
+              <h2 className="text-base font-semibold text-foreground">Student Records</h2>
             </div>
 
             {listError && (
@@ -372,10 +372,10 @@ export default function FacultyDashboard() {
             )}
           </article>
 
-          <article className="rounded-2xl border border-border/80 bg-card/90 p-4 shadow-sm lg:col-span-3">
+          <article className="panel-card p-4 lg:col-span-3">
             <div className="mb-3 flex items-center gap-2">
               <Database size={18} className="text-primary" />
-              <h2 className="text-lg font-semibold text-foreground">Update Student Record</h2>
+              <h2 className="text-base font-semibold text-foreground">Update Student Record</h2>
             </div>
 
             {saveMessage.text && (
@@ -554,10 +554,10 @@ export default function FacultyDashboard() {
           </article>
         </section>
 
-        <section className="rounded-2xl border border-border/80 bg-card/90 p-4 shadow-sm">
+        <section className="panel-card p-5">
           <div className="mb-3 flex items-center gap-2">
             <FileUp size={18} className="text-primary" />
-            <h2 className="text-lg font-semibold text-foreground">Bulk CSV Upload</h2>
+            <h2 className="text-base font-semibold text-foreground">Bulk CSV Upload</h2>
           </div>
           <p className="mb-3 text-sm text-muted-foreground">
             Required columns: student_id, semester, subject_name, marks. Optional: subject_code, grade, attendance, sgpa, cgpa.
