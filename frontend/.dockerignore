@@ -7,7 +7,6 @@ npm-debug.log
 .env
 .dockerignore
 Dockerfile
-nginx.conf
 .vscode
 .idea
 *.swp
