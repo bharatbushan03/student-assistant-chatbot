@@ -1,0 +1,62 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "miety-ai",
+  "main": "cloudflare/src/index.js",
+  "compatibility_date": "2026-10-30",
+  "observability": {
+    "enabled": true
+  },
+  "assets": {
+    "directory": "./frontend/dist",
+    "not_found_handling": "single-page-application",
+    "binding": "ASSETS",
+    "run_worker_first": [
+      "/auth",
+      "/auth/*",
+      "/chat",
+      "/chat/*",
+      "/api/*",
+      "/socket.io",
+      "/socket.io/*",
+      "/health",
+      "/docs",
+      "/docs/*",
+      "/redoc",
+      "/openapi.json"
+    ]
+  },
+  "containers": [
+    {
+      "class_name": "ApiContainer",
+      "scheduling_policy": "durable_object",
+      "images": {
+        "base": {
+          "dockerfile": "./Dockerfile"
+        }
+      }
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "API_CONTAINER",
+        "class_name": "ApiContainer"
+      }
+    ]
+  },
+  "exports": {
+    "ApiContainer": {
+      "type": "durable-object",
+      "storage": "sqlite"
+    }
+  },
+  "vars": {
+    "NVIDIA_MODEL": "nvidia/nemotron-3-super-120b-a12b",
+    "NVIDIA_BASE_URL": "https://integrate.api.nvidia.com/v1",
+    "PINECONE_INDEX_NAME": "miet-jammu-index",
+    "PINECONE_CLOUD": "aws",
+    "PINECONE_REGION": "us-east-1",
+    "MONGODB_DATABASE": "miety_ai",
+    "CORS_ORIGINS": "*"
+  }
+}

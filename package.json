@@ -1,0 +1,12 @@
+{
+  "name": "miety-ai",
+  "private": true,
+  "scripts": {
+    "build:frontend": "npm run build --prefix frontend",
+    "deploy": "npm run build:frontend && wrangler deploy",
+    "cf:dev": "npm run build:frontend && wrangler dev"
+  },
+  "devDependencies": {
+    "wrangler": "^4.136.0"
+  }
+}

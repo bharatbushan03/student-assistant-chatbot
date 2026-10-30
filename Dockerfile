@@ -1,4 +1,4 @@
-# API image for Render. The React app is deployed separately on Vercel.
+# API image for Cloudflare Containers. The React app is served by the Worker.
 FROM python:3.11-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -20,7 +20,7 @@ COPY app/ ./app/
 COPY run.py ./
 COPY ingestion/ ./ingestion/
 
-EXPOSE 10000
+EXPOSE 8080
 
-# Render injects PORT. Local Docker falls back to 10000.
+# Cloudflare Containers set PORT=8080. Local Docker falls back to 10000.
 CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-10000}"]
