@@ -65,3 +65,9 @@ def get_student_academics_collection():
     """Get the student academics collection for results and analytics."""
     db = get_database()
     return db["student_academics"]
+
+
+def get_notices_collection():
+    """Get campus notices shown on student and admin dashboards."""
+    db = get_database()
+    return db["notices"]

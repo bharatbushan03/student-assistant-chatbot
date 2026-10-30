@@ -1,8 +1,9 @@
 import axios from 'axios';
+import { getApiOrigin } from './apiOrigin';
 
-// Use relative paths so Vite proxy handles API requests in development
+// Relative during local dev (Vite proxy). Absolute when VITE_API_URL points at Render.
 const api = axios.create({
-  baseURL: '/',
+  baseURL: getApiOrigin() || undefined,
 });
 
 api.interceptors.request.use(

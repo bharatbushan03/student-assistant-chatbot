@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
-import { ChevronDown, LogOut, Menu, PanelLeft, Settings } from 'lucide-react';
+import { ChevronDown, LayoutDashboard, LogOut, Menu, PanelLeft, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 
@@ -23,6 +23,11 @@ export function Header({ toggleSidebar, title = 'Miety AI', subtitle = '' }) {
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef(null);
   const userLabel = user?.name || user?.email || 'User';
+  const dashboardPath = user?.role === 'admin'
+    ? '/admin/dashboard'
+    : user?.role === 'faculty'
+      ? '/faculty/dashboard'
+      : '/student/dashboard';
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -92,10 +97,22 @@ export function Header({ toggleSidebar, title = 'Miety AI', subtitle = '' }) {
               <button
                 type="button"
                 onClick={() => {
-                  navigate('/profile');
+                  navigate(dashboardPath);
                   setShowMenu(false);
                 }}
                 className="mt-2 flex w-full items-center gap-2 rounded-2xl px-3 py-2 text-sm text-foreground hover:bg-muted"
+              >
+                <LayoutDashboard size={16} />
+                Dashboard
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  navigate('/profile');
+                  setShowMenu(false);
+                }}
+                className="flex w-full items-center gap-2 rounded-2xl px-3 py-2 text-sm text-foreground hover:bg-muted"
               >
                 <Settings size={16} />
                 Profile

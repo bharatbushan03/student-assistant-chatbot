@@ -6,6 +6,7 @@ import { Header } from './components/Header';
 import { ChatWindow } from './components/ChatWindow';
 import { InputBar } from './components/InputBar';
 import { AuthContext } from './context/AuthContext';
+import { apiUrl } from './utils/apiOrigin';
 import { detectPromptContext } from './utils/intentDetection';
 import {
   LEGACY_WORKSPACE_CHAT_STORAGE_KEY,
@@ -145,7 +146,7 @@ export default function ChatApp() {
       const formData = new FormData();
       pickedFiles.forEach((file) => formData.append('files', file));
 
-      const response = await fetch('/chat/files/ingest', {
+      const response = await fetch(apiUrl('/chat/files/ingest'), {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -256,7 +257,7 @@ export default function ChatApp() {
     setIsProcessing(true);
 
     try {
-      const response = await fetch('/chat/ask', {
+      const response = await fetch(apiUrl('/chat/ask'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -308,7 +309,7 @@ export default function ChatApp() {
             {
               id: generateId(),
               role: 'ai',
-              content: '**Error:** Could not connect to the backend server. Please make sure the FastAPI backend is running on http://127.0.0.1:10000.',
+              content: '**Error:** Could not reach the API. For local dev, run the backend on port 10000. On Vercel, set VITE_API_URL to the Render URL and redeploy.',
               timestamp: Date.now(),
             },
           ],

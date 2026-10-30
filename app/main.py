@@ -10,7 +10,7 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from pymongo.errors import PyMongoError
 import socketio
 
-from app.routes import chat, auth, academics, groups, messages, projects
+from app.routes import admin, chat, auth, academics, groups, messages, projects
 from app.websocket.server import sio
 
 logger = logging.getLogger("uvicorn.error")
@@ -92,8 +92,8 @@ def _check_required_settings():
     missing = []
     if not settings.pinecone_api_key:
         missing.append("PINECONE_API_KEY")
-    if not settings.openai_api_key:
-        missing.append("OPENAI_API_KEY")
+    if not settings.nvidia_api_key:
+        missing.append("NVIDIA_API_KEY")
 
     if missing:
         logger.error("Missing required environment variables: %s", ", ".join(missing))
@@ -113,6 +113,8 @@ async def lifespan(application: FastAPI):
         # Ping MongoDB to verify connection
         await client.admin.command('ping')
         logger.info("✅  MongoDB connected")
+        from app.services.bootstrap import ensure_bootstrap_admin
+        await ensure_bootstrap_admin()
     except Exception as e:
         logger.warning(
             "⚠️  MongoDB connection failed during startup: %s. "
@@ -130,7 +132,7 @@ async def lifespan(application: FastAPI):
 
 fastapi_app = FastAPI(
     title="MIETY AI",
-    description="RAG-powered chatbot for MIET Jammu students",
+    description="RAG campus platform for MIET Jammu. Answers use NVIDIA Nemotron with Pinecone retrieval.",
     version="1.0.0",
     lifespan=lifespan,
 )
@@ -146,13 +148,37 @@ async def handle_mongodb_errors(request: Request, exc: PyMongoError):
     )
 
 # ── CORS ──────────────────────────────────────────────────────────────
-fastapi_app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+def _cors_middleware_kwargs() -> dict:
+    """Allow the Vercel frontend, local Vite, and optional preview deploys."""
+    from app.config.settings import get_settings
+
+    settings = get_settings()
+    raw = (settings.cors_origins or "*").strip()
+    if raw == "*":
+        return {
+            "allow_origins": ["*"],
+            "allow_credentials": False,
+            "allow_methods": ["*"],
+            "allow_headers": ["*"],
+        }
+
+    origins = [item.strip().rstrip("/") for item in raw.split(",") if item.strip()]
+    for local_origin in ("http://localhost:5173", "http://127.0.0.1:5173"):
+        if local_origin not in origins:
+            origins.append(local_origin)
+
+    kwargs = {
+        "allow_origins": origins,
+        "allow_credentials": False,
+        "allow_methods": ["*"],
+        "allow_headers": ["*"],
+    }
+    if settings.cors_allow_vercel_previews:
+        kwargs["allow_origin_regex"] = r"https://([a-zA-Z0-9-]+\.)*vercel\.app"
+    return kwargs
+
+
+fastapi_app.add_middleware(CORSMiddleware, **_cors_middleware_kwargs())
 
 # ── WebSocket (Socket.IO) ────────────────────────────────────────────
 # Mount Socket.IO server for real-time group messaging
@@ -163,12 +189,25 @@ fastapi_app.add_middleware(
 @fastapi_app.get("/health", include_in_schema=False)
 async def health_check():
     """Simple health check for Render / uptime monitors."""
-    return {"status": "ok"}
+    from app.config.settings import get_settings
+    settings = get_settings()
+    return {
+        "status": "ok",
+        "llm": {
+            "provider": "nvidia_nemotron",
+            "model": settings.nvidia_model,
+        },
+        "vector_db": {
+            "provider": "pinecone",
+            "index": settings.pinecone_index_name,
+        },
+    }
 
 # ── API routes ────────────────────────────────────────────────────────
 fastapi_app.include_router(chat.router, prefix="/chat", tags=["Chat"])
 fastapi_app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
 fastapi_app.include_router(academics.router, prefix="/api/academics", tags=["Academics"])
+fastapi_app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
 fastapi_app.include_router(projects.router, prefix="/api/projects", tags=["Projects"])
 fastapi_app.include_router(groups.router, prefix="/api/groups", tags=["Groups"])
 fastapi_app.include_router(messages.router, prefix="/api/groups", tags=["Messages"])

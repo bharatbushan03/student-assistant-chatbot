@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import Login from './components/auth/Login';
 import Signup from './components/auth/Signup';
@@ -12,6 +12,12 @@ import PrivacyPolicy from './components/legal/PrivacyPolicy';
 import TermsAndConditions from './components/legal/TermsAndConditions';
 import StudentDashboard from './components/dashboard/StudentDashboard';
 import FacultyDashboard from './components/dashboard/FacultyDashboard';
+import AdminDashboard from './components/dashboard/AdminDashboard';
+
+function AdminStudentPreview() {
+  const { studentId } = useParams();
+  return <StudentDashboard previewStudentId={studentId || ''} />;
+}
 
 function App() {
   return (
@@ -44,6 +50,24 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['faculty', 'admin']}>
                 <FacultyDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/dashboard"
+            element={
+              <ProtectedRoute allowedRoles={['faculty', 'admin']}>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/students/:studentId"
+            element={
+              <ProtectedRoute allowedRoles={['faculty', 'admin']}>
+                <AdminStudentPreview />
               </ProtectedRoute>
             }
           />

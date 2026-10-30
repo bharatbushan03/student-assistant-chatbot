@@ -11,7 +11,7 @@ import {
   Target,
   TrendingUp,
 } from 'lucide-react';
-import { fetchStudentDashboard } from '../../utils/academicsApi';
+import { fetchAdminStudentDashboard, fetchStudentDashboard } from '../../utils/academicsApi';
 
 function formatMetric(value, suffix = '') {
   if (value === null || value === undefined || Number.isNaN(value)) {
@@ -63,23 +63,37 @@ function StatCard({ title, value, icon, accentClass }) {
   );
 }
 
-export default function StudentDashboard() {
+function formatNoticeDate(value) {
+  if (!value) {
+    return '';
+  }
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return String(value);
+  }
+  return parsed.toLocaleString();
+}
+
+export default function StudentDashboard({ previewStudentId = '' }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [dashboard, setDashboard] = useState(null);
+  const isPreview = Boolean(previewStudentId);
 
   const loadDashboard = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
-      const data = await fetchStudentDashboard();
+      const data = isPreview
+        ? await fetchAdminStudentDashboard(previewStudentId)
+        : await fetchStudentDashboard();
       setDashboard(data);
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to load student dashboard.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isPreview, previewStudentId]);
 
   useEffect(() => {
     loadDashboard();
@@ -132,7 +146,9 @@ export default function StudentDashboard() {
         <header className="panel-card p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Student Dashboard</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                {isPreview ? 'Admin view of student dashboard' : 'Student Dashboard'}
+              </p>
               <h1 className="mt-1 text-2xl font-semibold text-foreground">
                 {dashboard?.profile?.name || 'Student'}
               </h1>
@@ -144,6 +160,9 @@ export default function StudentDashboard() {
             </div>
 
             <nav className="flex flex-wrap gap-2 text-sm">
+              {isPreview ? (
+                <Link className="secondary-button !rounded-2xl !px-3 !py-2" to="/admin/dashboard">Oversight</Link>
+              ) : null}
               <Link className="secondary-button !rounded-2xl !px-3 !py-2" to="/">Chat</Link>
               <Link className="secondary-button !rounded-2xl !px-3 !py-2" to="/projects">Projects</Link>
               <Link className="secondary-button !rounded-2xl !px-3 !py-2" to="/groups">Groups</Link>
@@ -151,6 +170,23 @@ export default function StudentDashboard() {
             </nav>
           </div>
         </header>
+
+        {dashboard?.notices?.length ? (
+          <section className="panel-card p-5">
+            <h2 className="text-base font-semibold text-foreground">Campus notices</h2>
+            <div className="mt-3 space-y-3">
+              {dashboard.notices.map((notice) => (
+                <article key={notice.id} className="rounded-xl border border-border/70 bg-muted/20 p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-sm font-semibold text-foreground">{notice.title}</p>
+                    <p className="text-xs text-muted-foreground">{formatNoticeDate(notice.created_at)}</p>
+                  </div>
+                  <p className="mt-1 text-sm text-muted-foreground">{notice.body}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <StatCard

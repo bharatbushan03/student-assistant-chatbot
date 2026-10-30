@@ -6,10 +6,26 @@ services:
     region: oregon
     healthCheckPath: /health
     envVars:
-      - key: OPENAI_API_KEY
+      - key: NVIDIA_API_KEY
         sync: false
-      - key: OPENAI_MODEL
-        value: gpt-4o-mini
+      - key: NVIDIA_MODEL
+        value: nvidia/nemotron-3-super-120b-a12b
+      - key: NVIDIA_BASE_URL
+        value: https://integrate.api.nvidia.com/v1
+      - key: PINECONE_API_KEY
+        sync: false
+      - key: PINECONE_INDEX_NAME
+        value: miet-jammu-index
+      - key: JWT_SECRET
+        sync: false
+      - key: MONGODB_URI
+        sync: false
+      - key: MONGODB_DATABASE
+        value: miety_ai
+      - key: CORS_ORIGINS
+        sync: false
+      - key: CORS_ALLOW_VERCEL_PREVIEWS
+        value: "true"
       - key: PORT
         value: 10000
       - key: PROJECT_ROOT

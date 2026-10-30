@@ -15,24 +15,40 @@ class Settings(BaseSettings):
     """Central application settings loaded from .env or environment variables."""
 
     # API keys
-    openai_api_key: str | None = Field(default=None, alias="OPENAI_API_KEY")
+    nvidia_api_key: str | None = Field(default=None, alias="NVIDIA_API_KEY")
     pinecone_api_key: str | None = Field(default=None, alias="PINECONE_API_KEY")
     jwt_secret: str = Field(default="your_super_secret_jwt_key_here", alias="JWT_SECRET")
 
-    # Model configuration
-    openai_model: str = Field(default="gpt-4o-mini", alias="OPENAI_MODEL")
+    # NVIDIA NIM — OpenAI-compatible chat API for Nemotron
+    nvidia_base_url: str = Field(
+        default="https://integrate.api.nvidia.com/v1",
+        alias="NVIDIA_BASE_URL",
+    )
+    nvidia_model: str = Field(
+        default="nvidia/nemotron-3-super-120b-a12b",
+        alias="NVIDIA_MODEL",
+    )
+
+    # Optional first admin, created once when no admin account exists yet
+    bootstrap_admin_email: str | None = Field(default=None, alias="BOOTSTRAP_ADMIN_EMAIL")
+    bootstrap_admin_password: str | None = Field(default=None, alias="BOOTSTRAP_ADMIN_PASSWORD")
+    bootstrap_admin_name: str = Field(default="MIET Administrator", alias="BOOTSTRAP_ADMIN_NAME")
 
     # Retrieval / storage
     processed_chunks_path: Path = PROJECT_ROOT / "data" / "processed" / "chunks.txt"
     num_context_chunks: int = 7  # Increased from 3 for better context coverage
 
     # Pinecone
-    pinecone_index_name: str = "miet-jammu-index"
-    pinecone_cloud: str = "aws"
-    pinecone_region: str = "us-east-1"
+    pinecone_index_name: str = Field(default="miet-jammu-index", alias="PINECONE_INDEX_NAME")
+    pinecone_cloud: str = Field(default="aws", alias="PINECONE_CLOUD")
+    pinecone_region: str = Field(default="us-east-1", alias="PINECONE_REGION")
 
     # Server
     port: int = Field(default=10000, alias="PORT")
+    # Comma-separated browser origins, or * for any origin.
+    # Example: https://miety-ai.vercel.app
+    cors_origins: str = Field(default="*", alias="CORS_ORIGINS")
+    cors_allow_vercel_previews: bool = Field(default=True, alias="CORS_ALLOW_VERCEL_PREVIEWS")
 
     # MongoDB
     mongodb_uri: str = Field(default="mongodb://localhost:27017", alias="MONGODB_URI")

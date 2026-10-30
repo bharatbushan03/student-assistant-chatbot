@@ -8,6 +8,7 @@ import { fetchStudentDashboard } from '../../utils/academicsApi';
 
 vi.mock('../../utils/academicsApi', () => ({
   fetchStudentDashboard: vi.fn(),
+  fetchAdminStudentDashboard: vi.fn(),
 }));
 
 describe('StudentDashboard render states', () => {

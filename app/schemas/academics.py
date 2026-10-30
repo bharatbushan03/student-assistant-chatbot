@@ -81,12 +81,22 @@ class StudentDashboardEmptyStatesSchema(BaseModel):
     insights: bool
 
 
+class NoticeSchema(BaseModel):
+    id: str
+    title: str
+    body: str
+    audience: Literal["all", "students"] = "all"
+    created_by: Optional[str] = None
+    created_at: Optional[datetime] = None
+
+
 class StudentDashboardResponseSchema(BaseModel):
     profile: StudentProfileSummarySchema
     results_summary: AcademicResultsSummarySchema
     analytics: PerformanceAnalyticsSchema
     insights: List[DashboardInsightSchema] = Field(default_factory=list)
     pending_tasks: List[StudentTaskSchema] = Field(default_factory=list)
+    notices: List[NoticeSchema] = Field(default_factory=list)
     empty_states: StudentDashboardEmptyStatesSchema
 
 

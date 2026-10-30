@@ -1,4 +1,5 @@
 import api from './api';
+import { apiUrl } from './apiOrigin';
 
 function getAuthHeaders() {
   const token = localStorage.getItem('token');
@@ -117,7 +118,7 @@ export async function streamProjectResponse({
   onToken,
   onDone,
 }) {
-  const response = await fetch(`/api/projects/${projectId}/chats/${chatId}/messages/stream`, {
+  const response = await fetch(apiUrl(`/api/projects/${projectId}/chats/${chatId}/messages/stream`), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

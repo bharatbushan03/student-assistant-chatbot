@@ -11,13 +11,14 @@ from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from pydantic import ValidationError
 from pymongo import ReturnDocument
 
-from app.db.mongodb import get_student_academics_collection, get_users_collection
+from app.db.mongodb import get_notices_collection, get_student_academics_collection, get_users_collection
 from app.schemas.academics import (
     AcademicResultsSummarySchema,
     AttendanceSummarySchema,
     BulkUploadErrorSchema,
     BulkUploadResponseSchema,
     DashboardInsightSchema,
+    NoticeSchema,
     FacultyStudentListResponseSchema,
     FacultyStudentSummarySchema,
     PerformanceAnalyticsSchema,
@@ -240,36 +241,13 @@ def _merge_sgpa_trend(
     return trend
 
 
-@router.get("/student/dashboard", response_model=StudentDashboardResponseSchema)
-async def get_student_dashboard(
-    current_user: dict = Depends(require_roles("student")),
-):
-    """Return a student-focused results and performance dashboard."""
-    users = get_users_collection()
-    academics = get_student_academics_collection()
-
-    email = current_user.get("email")
-    user = await users.find_one({"email": email})
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found.")
-
+def compose_student_dashboard(
+    user: dict,
+    record: dict | None,
+    notices: List[NoticeSchema] | None = None,
+) -> StudentDashboardResponseSchema:
+    """Build the student dashboard payload shared by students and admin preview."""
     role = _normalize_role(user.get("role"))
-    if user.get("role") != role:
-        await users.update_one(
-            {"_id": user["_id"]},
-            {"$set": {"role": role, "updated_at": datetime.utcnow()}},
-        )
-
-    student_id = user.get("college_id") or str(user["_id"])
-    record = await academics.find_one(
-        {
-            "$or": [
-                {"student_id": student_id},
-                {"student_email": email},
-            ]
-        }
-    )
-
     semester_results = _normalize_semester_results(record.get("semester_results") if record else None)
     provided_trend = _normalize_sgpa_trend(record.get("sgpa_trend") if record else None)
     sgpa_trend = _merge_sgpa_trend(provided_trend, semester_results)
@@ -296,10 +274,9 @@ async def get_student_dashboard(
     )
 
     insights = _build_insights(analytics, pending_tasks)
-
     profile = StudentProfileSummarySchema(
         id=str(user["_id"]),
-        email=user["email"],
+        email=user.get("email") or "unknown@mietjammu.in",
         role=role,
         name=user.get("name"),
         college_id=user.get("college_id"),
@@ -313,12 +290,67 @@ async def get_student_dashboard(
         analytics=analytics,
         insights=insights,
         pending_tasks=pending_tasks,
+        notices=notices or [],
         empty_states=StudentDashboardEmptyStatesSchema(
             results=len(semester_results) == 0,
             analytics=len(sgpa_trend) == 0 and len(subject_performance) == 0,
             insights=len(insights) == 0,
         ),
     )
+
+
+async def load_student_notices(limit: int = 8) -> List[NoticeSchema]:
+    """Return recent campus notices intended for students."""
+    notices = get_notices_collection()
+    cursor = notices.find({"audience": {"$in": ["all", "students"]}}).sort("created_at", -1).limit(limit)
+    items: List[NoticeSchema] = []
+    async for doc in cursor:
+        audience = doc.get("audience") if doc.get("audience") in {"all", "students"} else "all"
+        items.append(
+            NoticeSchema(
+                id=str(doc["_id"]),
+                title=str(doc.get("title") or "Notice"),
+                body=str(doc.get("body") or ""),
+                audience=audience,
+                created_by=doc.get("created_by"),
+                created_at=doc.get("created_at"),
+            )
+        )
+    return items
+
+
+@router.get("/student/dashboard", response_model=StudentDashboardResponseSchema)
+async def get_student_dashboard(
+    current_user: dict = Depends(require_roles("student")),
+):
+    """Return a student-focused results and performance dashboard."""
+    users = get_users_collection()
+    academics = get_student_academics_collection()
+
+    email = current_user.get("email")
+    user = await users.find_one({"email": email})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found.")
+
+    role = _normalize_role(user.get("role"))
+    if user.get("role") != role:
+        await users.update_one(
+            {"_id": user["_id"]},
+            {"$set": {"role": role, "updated_at": datetime.utcnow()}},
+        )
+        user["role"] = role
+
+    student_id = user.get("college_id") or str(user["_id"])
+    record = await academics.find_one(
+        {
+            "$or": [
+                {"student_id": student_id},
+                {"student_email": email},
+            ]
+        }
+    )
+    notices = await load_student_notices()
+    return compose_student_dashboard(user, record, notices)
 
 
 @router.get("/students", response_model=FacultyStudentListResponseSchema)

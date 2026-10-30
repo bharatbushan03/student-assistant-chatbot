@@ -17,10 +17,11 @@ ENV/
 *.egg-info/
 requirements-dev.txt
 
-# Node
+# Node / frontend (built and hosted on Vercel)
 node_modules
 npm-debug.log
 yarn-error.log
+frontend/
 
 # IDE
 .vscode

@@ -40,7 +40,13 @@ const Login = () => {
       if (data.success) {
         loginContext(data.user, data.token);
         const role = (data.user?.role || 'student').toLowerCase();
-        navigate(role === 'student' ? '/student/dashboard' : '/faculty/dashboard');
+        if (role === 'admin') {
+          navigate('/admin/dashboard');
+        } else if (role === 'faculty') {
+          navigate('/faculty/dashboard');
+        } else {
+          navigate('/student/dashboard');
+        }
       }
     } catch (err) {
       setError(err.response?.data?.detail || err.response?.data?.message || 'Invalid credentials.');

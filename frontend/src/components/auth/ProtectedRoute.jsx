@@ -22,7 +22,11 @@ const ProtectedRoute = ({ children, allowedRoles = null }) => {
     : 'student';
 
   if (Array.isArray(allowedRoles) && allowedRoles.length > 0 && !allowedRoles.includes(normalizedRole)) {
-    const fallbackPath = normalizedRole === 'student' ? '/student/dashboard' : '/faculty/dashboard';
+    const fallbackPath = normalizedRole === 'admin'
+      ? '/admin/dashboard'
+      : normalizedRole === 'faculty'
+        ? '/faculty/dashboard'
+        : '/student/dashboard';
     return <Navigate to={fallbackPath} replace />;
   }
 

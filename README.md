@@ -2,7 +2,7 @@
 
 A **RAG-powered chatbot** for MIET Jammu students. Ask about admissions, courses, fees, placements, campus life, and more.
 
-Built with **FastAPI** + **Pinecone** + **langchain_openai** (default model: `gpt-4o-mini`).
+Built with **FastAPI** + **Pinecone** + **NVIDIA Nemotron** (`nvidia/nemotron-3-super-120b-a12b` through the NVIDIA NIM API).
 
 ---
 
@@ -22,7 +22,7 @@ pip install -r requirements.txt
 
 ```bash
 cp .env.example .env
-# Edit .env and add your OpenAI API key and PINECONE_API_KEY
+# Edit .env and add NVIDIA_API_KEY and PINECONE_API_KEY
 ```
 
 ### 3. Build the knowledge base
@@ -51,17 +51,37 @@ Open **http://localhost:5173** in your browser.
 
 ---
 
-## Deploy to Render
+## Deploy
 
-1. Push to GitHub
-2. Connect the repo on [Render](https://render.com)
-3. Set required environment variables in Render:
-	- `JWT_SECRET`
-	- `MONGODB_URI`
-	- `MONGODB_DATABASE`
-	- `PINECONE_API_KEY`
-	- `OPENAI_API_KEY`
-4. Deploy — Render uses the `Dockerfile` and `render.yaml` automatically
+The API runs on Render. The React app runs on Vercel and calls that API. Deploy the API first so you have a URL for `VITE_API_URL`.
+
+### Backend on Render
+
+1. Push the repo to GitHub.
+2. In [Render](https://render.com), create a Blueprint from `render.yaml`, or a new Web Service with Docker and this repo.
+3. Set these environment variables on the service:
+   - `NVIDIA_API_KEY`
+   - `PINECONE_API_KEY`
+   - `MONGODB_URI` (Atlas is the practical choice; allow `0.0.0.0/0` so Render can connect)
+   - `JWT_SECRET` (a long random string, not the placeholder)
+   - `CORS_ORIGINS` set to the Vercel URL after the frontend exists, for example `https://your-app.vercel.app`
+4. The image listens on Render's `PORT`. The health check is `GET /health`.
+5. Copy the service URL, such as `https://student-assistant-chatbot.onrender.com`.
+
+The first build is slow because the image installs the embedding libraries. The first chat request also downloads the local embedding model onto the instance disk.
+
+### Frontend on Vercel
+
+1. Import the same GitHub repo in [Vercel](https://vercel.com).
+2. Leave the root directory as the repository root. `vercel.json` builds `frontend/`.
+3. Add an environment variable and then deploy:
+   - `VITE_API_URL` = the Render URL, with no trailing slash
+4. Vite bakes that value in at build time. If you change it, redeploy.
+5. Put the resulting `https://….vercel.app` URL into Render's `CORS_ORIGINS` and redeploy the API.
+
+Preview deployments on `*.vercel.app` are allowed while `CORS_ALLOW_VERCEL_PREVIEWS` is `true`.
+
+Local `npm run dev` does not need `VITE_API_URL`. The Vite dev server proxies `/auth`, `/chat`, `/api`, and `/socket.io` to `http://127.0.0.1:10000`.
 
 ---
 
@@ -100,8 +120,16 @@ Open **http://localhost:5173** in your browser.
 | `POST` | `/api/projects` | Create project workspace |
 | `POST` | `/api/projects/{project_id}/chats/{chat_id}/messages/stream` | Stream AI response inside a project chat |
 | `POST` | `/api/projects/{project_id}/files` | Upload project files |
+| `GET` | `/api/admin/overview` | Cohort view of every student dashboard |
+| `GET` | `/api/admin/students/{student_id}/dashboard` | Admin/faculty preview of one student dashboard |
 | `GET` | `/health` | Health check |
 | `GET` | `/docs` | Swagger API docs |
+
+## Roles
+
+- **Student** (`yourrollno@mietjammu.in`) registers from the signup page and opens `/student/dashboard`.
+- **Faculty** and **admin** (`yourname.dept@mietjammu.in`) are created by an administrator. Set `BOOTSTRAP_ADMIN_EMAIL` and `BOOTSTRAP_ADMIN_PASSWORD` once to create the first admin, then sign in and use **Student dashboards** at `/admin/dashboard`.
+- Faculty edit marks at `/faculty/dashboard` and can open the same student view an admin sees.
 
 ## Profile Fields
 

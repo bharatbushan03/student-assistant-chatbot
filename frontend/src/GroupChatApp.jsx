@@ -8,6 +8,7 @@ import React, {
 } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { io } from 'socket.io-client';
+import { getApiOrigin } from './utils/apiOrigin';
 import {
   ArrowLeft,
   Bell,
@@ -1031,7 +1032,7 @@ export default function GroupChatApp() {
       return undefined;
     }
 
-    const socket = io({
+    const socket = io(getApiOrigin() || undefined, {
       path: '/socket.io',
       auth: { token },
       transports: ['websocket', 'polling'],

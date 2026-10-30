@@ -214,7 +214,9 @@ export function Sidebar({
               <button
                 type="button"
                 onClick={() => {
-                  if (user?.role === 'admin' || user?.role === 'faculty') {
+                  if (user?.role === 'admin') {
+                    navigate('/admin/dashboard');
+                  } else if (user?.role === 'faculty') {
                     navigate('/faculty/dashboard');
                   } else {
                     navigate('/student/dashboard');
