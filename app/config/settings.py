@@ -28,6 +28,10 @@ class Settings(BaseSettings):
         default="nvidia/nemotron-3-super-120b-a12b",
         alias="NVIDIA_MODEL",
     )
+    nvidia_embed_model: str = Field(
+        default="nvidia/nv-embedqa-e5-v5",
+        alias="NVIDIA_EMBED_MODEL",
+    )
 
     # Optional first admin, created once when no admin account exists yet
     bootstrap_admin_email: str | None = Field(default=None, alias="BOOTSTRAP_ADMIN_EMAIL")

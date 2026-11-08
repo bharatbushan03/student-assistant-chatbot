@@ -52,6 +52,7 @@
   },
   "vars": {
     "NVIDIA_MODEL": "nvidia/nemotron-3-super-120b-a12b",
+    "NVIDIA_EMBED_MODEL": "nvidia/nv-embedqa-e5-v5",
     "NVIDIA_BASE_URL": "https://integrate.api.nvidia.com/v1",
     "PINECONE_INDEX_NAME": "miet-jammu-index",
     "PINECONE_CLOUD": "aws",

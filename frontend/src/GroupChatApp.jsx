@@ -1593,7 +1593,7 @@ export default function GroupChatApp() {
           title="Group Rooms"
         />
 
-        <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden p-3 md:p-4">
+        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden p-4 md:p-6">
           {groupsError && (
             <div className="flex items-center gap-3 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-600 dark:text-red-400">
               <CircleAlert size={16} />

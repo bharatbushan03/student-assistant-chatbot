@@ -34,12 +34,12 @@ function renderLogin(loginContext = vi.fn()) {
   );
 }
 
-describe('Login mode handling', () => {
+describe('Login role handling', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('submits in student mode by default and redirects to student dashboard', async () => {
+  it('signs in without a role selector and opens the student dashboard', async () => {
     const loginContext = vi.fn();
     api.post.mockResolvedValueOnce({
       data: {
@@ -51,15 +51,15 @@ describe('Login mode handling', () => {
 
     renderLogin(loginContext);
 
-    await userEvent.type(screen.getByPlaceholderText('yourrollno@mietjammu.in'), '2024a6r009@mietjammu.in');
+    expect(screen.queryByRole('button', { name: 'Faculty/Admin' })).not.toBeInTheDocument();
+    await userEvent.type(screen.getByPlaceholderText('name@mietjammu.in'), 'name@mietjammu.in');
     await userEvent.type(screen.getByPlaceholderText('Enter your password'), 'StrongPass123');
     await userEvent.click(screen.getByRole('button', { name: 'Sign In' }));
 
     await waitFor(() => {
       expect(api.post).toHaveBeenCalledWith('/auth/login', {
-        email: '2024a6r009@mietjammu.in',
+        email: 'name@mietjammu.in',
         password: 'StrongPass123',
-        mode: 'student',
       });
     });
 
@@ -67,7 +67,7 @@ describe('Login mode handling', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/student/dashboard');
   });
 
-  it('submits in faculty/admin mode and redirects to faculty dashboard', async () => {
+  it('opens the faculty dashboard when the account role is faculty', async () => {
     api.post.mockResolvedValueOnce({
       data: {
         success: true,
@@ -78,8 +78,7 @@ describe('Login mode handling', () => {
 
     renderLogin();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Faculty/Admin' }));
-    await userEvent.type(screen.getByPlaceholderText('yourname.dept@mietjammu.in'), 'john.cse@mietjammu.in');
+    await userEvent.type(screen.getByPlaceholderText('name@mietjammu.in'), 'john.cse@mietjammu.in');
     await userEvent.type(screen.getByPlaceholderText('Enter your password'), 'StrongPass123');
     await userEvent.click(screen.getByRole('button', { name: 'Sign In' }));
 
@@ -87,7 +86,6 @@ describe('Login mode handling', () => {
       expect(api.post).toHaveBeenCalledWith('/auth/login', {
         email: 'john.cse@mietjammu.in',
         password: 'StrongPass123',
-        mode: 'faculty_admin',
       });
     });
 

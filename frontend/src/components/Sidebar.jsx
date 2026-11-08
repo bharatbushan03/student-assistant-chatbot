@@ -93,19 +93,20 @@ export function Sidebar({
           isOpen ? 'translate-x-0' : '-translate-x-full md:hidden'
         }`}
       >
-        <div className="border-b border-border px-4 py-5">
-          <p className="section-label">Workspace</p>
+        <div className="border-b border-white/30 px-4 py-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-indigo-200">MIETY AI</p>
+          <p className="mt-1 text-sm text-slate-300">Campus workspace</p>
           <button
             type="button"
             onClick={onNewChat}
             className="primary-button mt-4 w-full gap-2"
           >
-            <Plus size={20} />
+            <Plus size={18} />
             New Chat
           </button>
         </div>
 
-        <div className="flex-1 space-y-4 overflow-y-auto px-3 py-4">
+        <div className="flex-1 space-y-5 overflow-y-auto px-4 py-5">
           <WorkspaceSection
             title="Chats"
             icon={MessageSquare}
@@ -119,10 +120,10 @@ export function Sidebar({
                 <div
                   key={chat.id}
                   onClick={() => onSelectChat(chat.id)}
-                  className={`group flex cursor-pointer items-center justify-between rounded-2xl px-3 py-2.5 text-sm transition-colors ${
+                  className={`group flex cursor-pointer items-center justify-between rounded-xl border px-3 py-2 text-sm transition-colors ${
                     activeChatId === chat.id
-                      ? 'bg-sky-100 text-sky-700 font-medium'
-                      : 'text-slate-600 hover:bg-sky-50 hover:text-sky-900'
+                      ? 'border-white/40 bg-white/15 font-medium text-white'
+                      : 'border-white/15 text-slate-300 hover:border-white/30 hover:bg-white/10 hover:text-white'
                   }`}
                 >
                   <div className="flex min-w-0 items-center gap-2">
@@ -135,7 +136,7 @@ export function Sidebar({
                       event.stopPropagation();
                       onDeleteChat(chat.id);
                     }}
-                    className="rounded-full p-1 text-slate-400 opacity-0 hover:bg-red-100 hover:text-red-600 group-hover:opacity-100 transition-colors"
+                    className="rounded-full p-1 text-slate-400 opacity-0 transition-colors hover:bg-red-500/20 hover:text-red-200 group-hover:opacity-100"
                     aria-label="Delete chat"
                   >
                     <Trash2 size={20} />
@@ -163,10 +164,10 @@ export function Sidebar({
                   key={project.id}
                   type="button"
                   onClick={() => navigate(`/projects/${project.id}`)}
-                  className={`flex w-full items-center gap-2 rounded-2xl px-3 py-2.5 text-left text-sm transition-colors ${
+                  className={`flex w-full items-center gap-2 rounded-xl border px-3 py-2 text-left text-sm transition-colors ${
                     activeProjectId === project.id
-                      ? 'bg-sky-100 text-sky-700 font-medium'
-                      : 'text-slate-600 hover:bg-sky-50 hover:text-sky-900'
+                      ? 'border-white/40 bg-white/15 font-medium text-white'
+                      : 'border-white/15 text-slate-300 hover:border-white/30 hover:bg-white/10 hover:text-white'
                   }`}
                 >
                   <FolderKanban size={20} className="shrink-0" />
@@ -194,10 +195,10 @@ export function Sidebar({
                   key={group.id}
                   type="button"
                   onClick={() => navigate(`/groups/${group.id}`)}
-                  className={`flex w-full items-center gap-2 rounded-2xl px-3 py-2.5 text-left text-sm transition-colors ${
+                  className={`flex w-full items-center gap-2 rounded-xl border px-3 py-2 text-left text-sm transition-colors ${
                     activeGroupId === group.id
-                      ? 'bg-sky-100 text-sky-700 font-medium'
-                      : 'text-slate-600 hover:bg-sky-50 hover:text-sky-900'
+                      ? 'border-white/40 bg-white/15 font-medium text-white'
+                      : 'border-white/15 text-slate-300 hover:border-white/30 hover:bg-white/10 hover:text-white'
                   }`}
                 >
                   <Users size={20} className="shrink-0" />
@@ -209,7 +210,7 @@ export function Sidebar({
             )}
           </WorkspaceSection>
 
-          <section className="rounded-[1.5rem] border border-sky-100 bg-sky-50/50 px-2 py-2 shadow-none">
+          <section className="rounded-xl border border-white/30 bg-white/5 px-2 py-2">
             <div className="flex items-center gap-2 px-2 py-1">
               <button
                 type="button"
@@ -222,23 +223,23 @@ export function Sidebar({
                     navigate('/student/dashboard');
                   }
                 }}
-                className="flex flex-1 items-center gap-2 rounded-2xl px-3 py-2 text-sm font-medium transition-colors text-slate-700 hover:bg-sky-50"
+                className="flex flex-1 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-200 transition-colors hover:bg-white/10 hover:text-white"
               >
-                <LayoutDashboard size={20} />
+                <LayoutDashboard size={18} />
                 Dashboard
               </button>
             </div>
           </section>
         </div>
 
-        <div className="border-t border-border px-4 py-4">
-          <p className="text-sm text-muted-foreground">Student Assistant</p>
+        <div className="border-t border-white/30 px-4 py-4">
+          <p className="text-sm text-slate-400">Student Assistant</p>
         </div>
 
         <button
           type="button"
           onClick={() => setIsOpen(false)}
-          className="absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card text-muted-foreground hover:bg-muted md:hidden"
+          className="absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white hover:bg-white/20 md:hidden"
           aria-label="Close sidebar"
         >
           <X size={16} />
@@ -258,32 +259,32 @@ function WorkspaceSection({
   children,
 }) {
   return (
-    <section className="rounded-[1.5rem] border border-sky-100 bg-sky-50/50 px-2 py-2 shadow-none">
-      <div className="flex items-center gap-2 px-2 py-1">
+    <section className="rounded-xl border border-white/30 bg-white/5 px-2 py-2">
+      <div className="flex items-center gap-2 px-1 py-1">
         <button
           type="button"
           onClick={onNavigate}
-          className={`flex flex-1 items-center gap-2 rounded-2xl px-3 py-2 text-sm font-medium transition-colors ${
+          className={`flex flex-1 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
             isActive
-              ? 'bg-sky-100 text-sky-700'
-              : 'text-slate-700 hover:bg-sky-50'
+              ? 'bg-white/15 text-white'
+              : 'text-slate-200 hover:bg-white/10'
           }`}
         >
-          <Icon size={20} />
+          <Icon size={18} />
           {title}
         </button>
 
         <button
           type="button"
           onClick={onToggle}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-500 hover:bg-sky-100 hover:text-sky-700 transition-colors"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
           aria-label={isExpanded ? `Hide ${title}` : `Show ${title}`}
         >
           {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
         </button>
       </div>
 
-      {isExpanded ? <div className="space-y-1 px-1 pb-1 pt-2">{children}</div> : null}
+      {isExpanded ? <div className="mt-2 space-y-2 px-2 pb-2">{children}</div> : null}
     </section>
   );
 }

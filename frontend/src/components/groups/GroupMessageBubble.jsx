@@ -180,7 +180,7 @@ export function GroupMessageBubble({
   );
 
   return (
-    <div className={`w-full px-4 py-4 ${isAI ? 'border-b border-border/50 bg-muted/20' : ''}`}>
+    <div className={`w-full px-4 py-4 ${isAI ? 'border-b border-border bg-muted/20' : ''}`}>
       <div className="mx-auto flex w-full max-w-5xl gap-4">
         <div className="shrink-0">{avatarNode}</div>
 

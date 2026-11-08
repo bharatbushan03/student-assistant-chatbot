@@ -110,7 +110,7 @@ export function GroupSidebar({
           </button>
         </div>
 
-        <div className="flex-1 space-y-4 overflow-y-auto px-3 py-4">
+        <div className="flex-1 space-y-5 overflow-y-auto px-4 py-5">
           <WorkspaceSection
             title="Chats"
             icon={MessageSquare}
@@ -255,7 +255,7 @@ function WorkspaceSection({
         </button>
       </div>
 
-      {isExpanded ? <div className="space-y-1 px-1 pb-1 pt-2">{children}</div> : null}
+      {isExpanded ? <div className="mt-2 space-y-2 px-2 pb-2">{children}</div> : null}
     </section>
   );
 }

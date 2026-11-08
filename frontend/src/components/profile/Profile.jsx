@@ -182,7 +182,7 @@ const Profile = () => {
 
       <main className="mx-auto max-w-2xl px-4 py-8">
         <div className="panel-card overflow-hidden">
-          <div className="relative h-28 bg-muted/55">
+          <div className="relative h-32 bg-gradient-to-r from-indigo-700 to-sky-500">
             <div className="absolute -bottom-16 left-8">
               <div className="relative">
                 <div className="h-32 w-32 overflow-hidden rounded-full border-4 border-card bg-card">
@@ -215,7 +215,7 @@ const Profile = () => {
             className="hidden"
           />
 
-          <div className="px-8 pb-8 pt-4">
+          <div className="px-8 pb-8 pt-24">
             <div className="mb-6 flex justify-end gap-2">
               {!isEditing ? (
                 <button
@@ -255,13 +255,13 @@ const Profile = () => {
               </div>
             )}
 
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-2">
                   <Mail size={16} />
                   Email Address
                 </label>
-                <div className="rounded-2xl bg-muted/55 px-4 py-3 text-foreground">
+                <div className="rounded-2xl border border-border bg-muted/55 px-4 py-3 text-foreground">
                   {user?.email || 'N/A'}
                 </div>
               </div>
@@ -281,7 +281,7 @@ const Profile = () => {
                     className="soft-input"
                   />
                 ) : (
-                  <div className="rounded-2xl bg-muted/55 px-4 py-3 text-foreground">
+                  <div className="rounded-2xl border border-border bg-muted/55 px-4 py-3 text-foreground">
                     {formData.name || 'Not set'}
                   </div>
                 )}
@@ -302,7 +302,7 @@ const Profile = () => {
                     className="soft-input"
                   />
                 ) : (
-                  <div className="rounded-2xl bg-muted/55 px-4 py-3 text-foreground">
+                  <div className="rounded-2xl border border-border bg-muted/55 px-4 py-3 text-foreground">
                     {formData.college_id || 'Not set'}
                   </div>
                 )}
@@ -328,7 +328,7 @@ const Profile = () => {
                     <option value="E">Section E</option>
                   </select>
                 ) : (
-                  <div className="rounded-2xl bg-muted/55 px-4 py-3 text-foreground">
+                  <div className="rounded-2xl border border-border bg-muted/55 px-4 py-3 text-foreground">
                     {formData.section ? `Section ${formData.section}` : 'Not set'}
                   </div>
                 )}
@@ -357,7 +357,7 @@ const Profile = () => {
                     <option value="8">Semester 8</option>
                   </select>
                 ) : (
-                  <div className="rounded-2xl bg-muted/55 px-4 py-3 text-foreground">
+                  <div className="rounded-2xl border border-border bg-muted/55 px-4 py-3 text-foreground">
                     {formData.semester ? `Semester ${formData.semester}` : 'Not set'}
                   </div>
                 )}
@@ -378,7 +378,7 @@ const Profile = () => {
                     className="soft-input min-h-28"
                   />
                 ) : (
-                  <div className="rounded-2xl bg-muted/55 px-4 py-3 text-foreground whitespace-pre-wrap">
+                  <div className="rounded-2xl border border-border bg-muted/55 px-4 py-3 text-foreground whitespace-pre-wrap">
                     {formData.project || 'Not set'}
                   </div>
                 )}

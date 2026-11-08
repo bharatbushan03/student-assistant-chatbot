@@ -343,23 +343,16 @@ export default function ChatApp() {
             subtitle="Simple study chat for classes, projects, and campus work."
           />
 
-          <div className="flex min-h-0 flex-1 flex-col px-3 py-3 md:px-5 md:py-5">
+          <div className="flex min-h-0 flex-1 flex-col gap-4 px-4 pb-24 pt-4 md:px-8 md:pb-6 md:pt-5">
             <div className="panel-card flex min-h-0 flex-1 flex-col overflow-hidden">
-              <div className="border-b border-border px-5 py-4">
-                <p className="section-label">Chat</p>
-                <h1 className="mt-1 text-lg font-semibold text-foreground">Study Assistant</h1>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Ask questions, upload supporting files, and keep each conversation organized.
-                </p>
-              </div>
-
               <ChatWindow
                 messages={messages}
                 isProcessing={isProcessing}
+                onUsePrompt={setPromptDraft}
               />
             </div>
 
-            <div className="mt-4">
+            <div className="mx-auto w-full max-w-3xl">
               <InputBar
                 onSendMessage={handleSendMessage}
                 isProcessing={isProcessing || isUploadingFiles}
@@ -409,7 +402,7 @@ function getPlaceholder(detection) {
 
 function MobileWorkspaceDock({ onOpenChats, onOpenProjects, onOpenGroups }) {
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card px-3 py-2 md:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 px-3 py-2 backdrop-blur md:hidden">
       <div className="grid grid-cols-3 gap-2">
         <DockButton icon={MessageSquare} label="Chats" onClick={onOpenChats} />
         <DockButton icon={FolderKanban} label="Projects" onClick={onOpenProjects} />

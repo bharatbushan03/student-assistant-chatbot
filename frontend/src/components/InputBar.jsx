@@ -101,8 +101,8 @@ export function InputBar({
 
   return (
     <div className="w-full">
-      <div className="panel-card overflow-hidden p-2">
-        <div className="flex items-end gap-2 rounded-[1.25rem] bg-muted/45 p-2">
+      <div className="panel-card p-3 shadow-md">
+        <div className="flex items-end gap-3 rounded-xl border border-border bg-muted/50 p-3">
           <textarea
             ref={textareaRef}
             value={input}
@@ -119,7 +119,7 @@ export function InputBar({
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={isProcessing}
-              className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-card text-muted-foreground hover:bg-background hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-card text-muted-foreground hover:bg-background hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
               aria-label="Attach files"
               title="Attach files"
             >
@@ -131,7 +131,7 @@ export function InputBar({
             type="button"
             onClick={handleSend}
             disabled={!input.trim() || isProcessing}
-            className={`inline-flex h-12 w-12 items-center justify-center rounded-2xl ${
+            className={`inline-flex h-11 w-11 items-center justify-center rounded-xl ${
               input.trim() && !isProcessing
                 ? 'bg-primary text-primary-foreground'
                 : 'bg-card text-muted-foreground'

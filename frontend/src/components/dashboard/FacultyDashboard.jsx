@@ -262,8 +262,8 @@ export default function FacultyDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-background px-4 py-6">
-      <div className="mx-auto max-w-7xl space-y-6">
+    <div className="min-h-screen bg-background px-5 py-8 md:px-8">
+      <div className="mx-auto max-w-7xl space-y-8">
         <header className="panel-card p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -327,7 +327,7 @@ export default function FacultyDashboard() {
           </form>
         </section>
 
-        <section className="grid gap-4 lg:grid-cols-5">
+        <section className="grid gap-6 lg:grid-cols-5">
           <article className="panel-card p-5 lg:col-span-2">
             <div className="mb-3 flex items-center gap-2">
               <Users size={18} className="text-primary" />
@@ -346,14 +346,14 @@ export default function FacultyDashboard() {
                 Loading records...
               </div>
             ) : (
-              <div className="max-h-[460px] space-y-2 overflow-y-auto pr-1">
+              <div className="max-h-[460px] space-y-3 overflow-y-auto pr-1">
                 {students.map((student) => (
                   <div
                     key={student.student_id}
                     className={`w-full rounded-xl border p-3 text-left transition-colors ${
                       selectedStudentId === student.student_id
                         ? 'border-primary/50 bg-primary/10'
-                        : 'border-border/70'
+                        : 'border-border'
                     }`}
                   >
                     <button
@@ -601,7 +601,7 @@ export default function FacultyDashboard() {
           )}
 
           {bulkResult && !bulkResult.error && (
-            <div className="mt-3 space-y-2 rounded-lg border border-border/70 bg-muted/20 p-3 text-sm">
+            <div className="mt-3 space-y-2 rounded-lg border border-border bg-muted/20 p-3 text-sm">
               <p className="text-foreground">Processed rows: {bulkResult.processed_count}</p>
               <p className="text-foreground">Updated records: {bulkResult.updated_records}</p>
               {!!bulkResult.errors?.length && (
@@ -620,7 +620,7 @@ export default function FacultyDashboard() {
           )}
         </section>
 
-        <footer className="rounded-2xl border border-border/70 bg-card/80 p-4 text-sm text-muted-foreground">
+        <footer className="rounded-2xl border border-border bg-card/80 p-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <AlertTriangle size={16} />
             Audit metadata is automatically tracked with each update (updated_by and updated_at).

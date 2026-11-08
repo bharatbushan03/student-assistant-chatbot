@@ -53,11 +53,19 @@ def answer_query(query: str, history: List[Dict[str, str]] = None) -> str:
     settings = get_settings()
 
     try:
-        # Retrieve relevant chunks with query expansion for better coverage
         chunks = retrieve(query, n_results=settings.num_context_chunks, use_expansion=True)
     except Exception as exc:
-        logger.error("Retrieval failed: %s", exc)
-        return "I'm having trouble accessing the knowledge base right now. Please try again in a moment."
+        message = str(exc).lower()
+        if "dimension" in message:
+            logger.warning(
+                "Pinecone index does not match the NVIDIA embedding size. "
+                "Answering without retrieved documents. Re-run python run.py to rebuild the index. %s",
+                exc,
+            )
+            chunks = []
+        else:
+            logger.error("Retrieval failed: %s", exc)
+            return "I'm having trouble accessing the knowledge base right now. Please try again in a moment."
 
     if not chunks:
         # No context found - try web search first, then fall back to LLM

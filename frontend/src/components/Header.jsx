@@ -46,13 +46,13 @@ export function Header({ toggleSidebar, title = 'Miety AI', subtitle = '' }) {
   };
 
   return (
-    <header className="border-b border-border bg-background px-4 py-3 md:px-5">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-3">
+    <header className="border-b border-border bg-card px-5 py-4 md:px-6">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex min-w-0 items-center gap-4">
           <button
             type="button"
             onClick={toggleSidebar}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground"
             aria-label="Toggle sidebar"
           >
             <PanelLeft size={18} className="hidden md:block" />
@@ -60,7 +60,7 @@ export function Header({ toggleSidebar, title = 'Miety AI', subtitle = '' }) {
           </button>
 
           <div className="flex min-w-0 items-center gap-3">
-            <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-accent text-sm font-bold text-accent-foreground">
+            <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground">
               M
             </span>
             <div className="min-w-0">
@@ -74,7 +74,7 @@ export function Header({ toggleSidebar, title = 'Miety AI', subtitle = '' }) {
           <button
             type="button"
             onClick={() => setShowMenu((current) => !current)}
-            className="inline-flex items-center gap-3 rounded-2xl border border-border bg-card px-3 py-2 hover:bg-muted"
+            className="inline-flex items-center gap-3 rounded-xl border border-border bg-card px-2.5 py-1.5 hover:bg-muted"
             aria-label="Open user menu"
           >
             <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-accent text-sm font-semibold text-accent-foreground">
@@ -88,7 +88,7 @@ export function Header({ toggleSidebar, title = 'Miety AI', subtitle = '' }) {
           </button>
 
           {showMenu ? (
-            <div className="absolute right-0 z-50 mt-2 w-56 rounded-3xl border border-border bg-popover p-2 shadow-lg">
+            <div className="absolute right-0 z-50 mt-2 w-56 rounded-2xl border border-border bg-popover p-2 shadow-lg">
               <div className="rounded-2xl bg-muted/55 px-3 py-3">
                 <p className="truncate text-sm font-medium text-foreground">{userLabel}</p>
                 <p className="truncate text-xs text-muted-foreground">{user?.email || ''}</p>

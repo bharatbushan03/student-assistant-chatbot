@@ -141,8 +141,8 @@ export default function StudentDashboard({ previewStudentId = '' }) {
   }
 
   return (
-    <div className="min-h-screen bg-background px-4 py-6">
-      <div className="mx-auto max-w-6xl space-y-6">
+    <div className="min-h-screen bg-background px-5 py-8 md:px-8">
+      <div className="mx-auto max-w-6xl space-y-8">
         <header className="panel-card p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -176,7 +176,7 @@ export default function StudentDashboard({ previewStudentId = '' }) {
             <h2 className="text-base font-semibold text-foreground">Campus notices</h2>
             <div className="mt-3 space-y-3">
               {dashboard.notices.map((notice) => (
-                <article key={notice.id} className="rounded-xl border border-border/70 bg-muted/20 p-3">
+                <article key={notice.id} className="rounded-xl border border-border bg-muted/20 p-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="text-sm font-semibold text-foreground">{notice.title}</p>
                     <p className="text-xs text-muted-foreground">{formatNoticeDate(notice.created_at)}</p>
@@ -188,7 +188,7 @@ export default function StudentDashboard({ previewStudentId = '' }) {
           </section>
         ) : null}
 
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
           <StatCard
             title="Latest SGPA"
             value={formatMetric(dashboard?.results_summary?.latest_sgpa)}
@@ -215,7 +215,7 @@ export default function StudentDashboard({ previewStudentId = '' }) {
           />
         </section>
 
-        <section className="grid gap-4 lg:grid-cols-3">
+        <section className="grid gap-6 lg:grid-cols-3">
           <article className="panel-card p-5 lg:col-span-2">
             <div className="mb-4 flex items-center justify-between">
               <div>
@@ -231,10 +231,10 @@ export default function StudentDashboard({ previewStudentId = '' }) {
               </p>
             ) : (
               <div className="space-y-3">
-                <svg viewBox="0 0 420 180" className="h-52 w-full rounded-xl border border-border/70 bg-muted/20 p-2">
+                <svg viewBox="0 0 420 180" className="h-52 w-full rounded-xl border border-border bg-muted/20 p-2 text-primary">
                   <polyline
                     fill="none"
-                    stroke="hsl(var(--primary))"
+                    stroke="currentColor"
                     strokeWidth="3"
                     strokeLinejoin="round"
                     strokeLinecap="round"
@@ -250,8 +250,8 @@ export default function StudentDashboard({ previewStudentId = '' }) {
 
                     return (
                       <g key={`${point.semester}-${index}`}>
-                        <circle cx={x} cy={y} r="4" fill="hsl(var(--primary))" />
-                        <text x={x} y="170" textAnchor="middle" fontSize="10" fill="hsl(var(--muted-foreground))">
+                        <circle cx={x} cy={y} r="4" fill="currentColor" />
+                        <text x={x} y="170" textAnchor="middle" fontSize="10" fill="var(--muted-foreground)">
                           {point.semester}
                         </text>
                       </g>
@@ -269,7 +269,7 @@ export default function StudentDashboard({ previewStudentId = '' }) {
             {dashboard?.insights?.length ? (
               <div className="space-y-3">
                 {dashboard.insights.map((insight, index) => (
-                  <div key={`${insight.title}-${index}`} className="rounded-xl border border-border/70 bg-muted/20 p-3">
+                  <div key={`${insight.title}-${index}`} className="rounded-xl border border-border bg-muted/20 p-3">
                     <p className="text-sm font-semibold text-foreground">{insight.title}</p>
                     <p className="mt-1 text-xs text-muted-foreground">{insight.description}</p>
                     {insight.action && (
@@ -322,7 +322,7 @@ export default function StudentDashboard({ previewStudentId = '' }) {
             {pendingTasks.length ? (
               <ul className="space-y-2">
                 {pendingTasks.map((task, index) => (
-                  <li key={`${task.title}-${index}`} className="flex items-start justify-between gap-3 rounded-xl border border-border/70 bg-muted/20 p-3">
+                  <li key={`${task.title}-${index}`} className="flex items-start justify-between gap-3 rounded-xl border border-border bg-muted/20 p-3">
                     <div>
                       <p className="text-sm font-medium text-foreground">{task.title}</p>
                       <p className="text-xs text-muted-foreground">Due: {task.due_date || 'Not specified'}</p>

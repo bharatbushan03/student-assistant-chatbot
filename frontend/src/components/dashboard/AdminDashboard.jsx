@@ -36,12 +36,12 @@ function formatMetric(value, suffix = '') {
 
 function statusClass(status) {
   if (status === 'at_risk') {
-    return 'bg-destructive/10 text-destructive';
+    return 'border border-destructive/50 bg-destructive/10 text-destructive';
   }
   if (status === 'missing_record') {
-    return 'bg-amber-500/15 text-amber-700';
+    return 'border border-amber-600/40 bg-amber-500/15 text-amber-700';
   }
-  return 'bg-emerald-500/15 text-emerald-700';
+  return 'border border-emerald-600/40 bg-emerald-500/15 text-emerald-700';
 }
 
 function StatCard({ title, value, detail }) {
@@ -213,8 +213,8 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background px-4 py-6">
-      <div className="mx-auto max-w-7xl space-y-6">
+    <div className="min-h-screen bg-background px-5 py-8 md:px-8">
+      <div className="mx-auto max-w-7xl space-y-8">
         <header className="panel-card p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -245,7 +245,7 @@ export default function AdminDashboard() {
           <p className="rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">{error}</p>
         ) : null}
 
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
           <StatCard title="Students" value={String(overview?.total_students ?? 0)} detail="Accounts plus unmatched records" />
           <StatCard title="At risk" value={String(overview?.at_risk_count ?? 0)} detail="Attendance under 75% or score under 6.0" />
           <StatCard title="Missing records" value={String(overview?.missing_records ?? 0)} detail="Registered students with no marks file" />
@@ -268,7 +268,7 @@ export default function AdminDashboard() {
                   key={student.student_id}
                   type="button"
                   onClick={() => navigate(`/admin/students/${encodeURIComponent(student.student_id)}`)}
-                  className="rounded-xl border border-border/70 bg-muted/20 p-3 text-left hover:bg-muted/40"
+                  className="rounded-xl border border-border bg-muted/20 p-3 text-left hover:bg-muted/40"
                 >
                   <p className="text-sm font-semibold text-foreground">{student.name || student.student_id}</p>
                   <p className="text-xs text-muted-foreground">
@@ -293,7 +293,7 @@ export default function AdminDashboard() {
             <Users size={18} className="text-primary" />
             <h2 className="text-base font-semibold text-foreground">Student directory</h2>
           </div>
-          <form onSubmit={applyFilters} className="mb-4 grid gap-3 md:grid-cols-5">
+          <form onSubmit={applyFilters} className="mb-5 grid gap-4 md:grid-cols-5">
             <label className="text-sm md:col-span-2">
               <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-muted-foreground">Search</span>
               <input
@@ -362,7 +362,7 @@ export default function AdminDashboard() {
               </thead>
               <tbody>
                 {students.map((student) => (
-                  <tr key={`${student.student_id}-${student.email || ''}`} className="border-t border-border/70">
+                  <tr key={`${student.student_id}-${student.email || ''}`} className="border-t border-border">
                     <td className="px-2 py-3">
                       <p className="font-medium text-foreground">{student.name || 'Unnamed student'}</p>
                       <p className="text-xs text-muted-foreground">{student.student_id}</p>
@@ -401,7 +401,7 @@ export default function AdminDashboard() {
           </div>
         </section>
 
-        <section className="grid gap-4 lg:grid-cols-2">
+        <section className="grid gap-6 lg:grid-cols-2">
           <article className="panel-card p-5">
             <div className="mb-3 flex items-center gap-2">
               <Bell size={18} className="text-primary" />
@@ -443,7 +443,7 @@ export default function AdminDashboard() {
             {noticeMessage ? <p className="mt-3 text-sm text-muted-foreground">{noticeMessage}</p> : null}
             <div className="mt-4 space-y-2">
               {notices.map((notice) => (
-                <div key={notice.id} className="flex items-start justify-between gap-3 rounded-xl border border-border/70 p-3">
+                <div key={notice.id} className="flex items-start justify-between gap-3 rounded-xl border border-border p-3">
                   <div>
                     <p className="text-sm font-semibold text-foreground">{notice.title}</p>
                     <p className="mt-1 text-xs text-muted-foreground">{notice.body}</p>
@@ -473,7 +473,7 @@ export default function AdminDashboard() {
                 <h2 className="text-base font-semibold text-foreground">Provision faculty or admin</h2>
               </div>
               <p className="mb-3 text-sm text-muted-foreground">
-                Staff accounts use yourname.dept@mietjammu.in. Students still register themselves.
+                New registrations stay students. Appoint an existing MIET email to faculty or admin here.
               </p>
               <form onSubmit={handleProvision} className="space-y-3">
                 <input
@@ -488,7 +488,7 @@ export default function AdminDashboard() {
                   value={accountForm.email}
                   onChange={(event) => setAccountForm((prev) => ({ ...prev, email: event.target.value }))}
                   className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
-                  placeholder="name.dept@mietjammu.in"
+                  placeholder="name@mietjammu.in"
                   required
                 />
                 <input

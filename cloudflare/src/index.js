@@ -16,6 +16,7 @@ function containerEnv(env) {
     PROJECT_ROOT: "/app",
     NVIDIA_API_KEY: env.NVIDIA_API_KEY,
     NVIDIA_MODEL: env.NVIDIA_MODEL || "nvidia/nemotron-3-super-120b-a12b",
+    NVIDIA_EMBED_MODEL: env.NVIDIA_EMBED_MODEL || "nvidia/nv-embedqa-e5-v5",
     NVIDIA_BASE_URL: env.NVIDIA_BASE_URL || "https://integrate.api.nvidia.com/v1",
     PINECONE_API_KEY: env.PINECONE_API_KEY,
     PINECONE_INDEX_NAME: env.PINECONE_INDEX_NAME || "miet-jammu-index",

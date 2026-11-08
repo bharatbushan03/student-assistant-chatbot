@@ -214,8 +214,7 @@ def main():
     avg_length = sum(chunk_lengths) / len(chunk_lengths)
     print(f"Average chunk size: {avg_length:.0f} characters")
 
-    # Load embedding model
-    print("\nLoading embedding model...")
+    print("\nRequesting embeddings from the NVIDIA API...")
     model = get_embedding_model()
 
     # Generate embeddings

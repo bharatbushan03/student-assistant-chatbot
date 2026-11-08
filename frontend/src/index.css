@@ -39,34 +39,34 @@
 
 @layer base {
   :root {
-    --background: #F8F9FC;
-    --foreground: #0F1117;
+    --background: #F4F6FB;
+    --foreground: #0F172A;
     --card: #FFFFFF;
-    --card-foreground: #0F1117;
+    --card-foreground: #0F172A;
     --popover: #FFFFFF;
-    --popover-foreground: #0F1117;
-    --primary: #4F46E5;
+    --popover-foreground: #0F172A;
+    --primary: #4338CA;
     --primary-foreground: #FFFFFF;
-    --secondary: #F1F5F9;
-    --secondary-foreground: #334155;
+    --secondary: #EEF2FF;
+    --secondary-foreground: #312E81;
     --muted: #F1F5F9;
     --muted-foreground: #64748B;
     --accent: #EEF2FF;
-    --accent-foreground: #4F46E5;
-    --destructive: #EF4444;
+    --accent-foreground: #3730A3;
+    --destructive: #DC2626;
     --destructive-foreground: #FFFFFF;
-    --border: #E2E8F0;
-    --input: #E2E8F0;
-    --ring: #4F46E5;
-    --radius: 0.625rem;
-    --sidebar-background: #F0F9FF;
-    --sidebar-foreground: #0F1117;
-    --sidebar-primary: #0EA5E9;
+    --border: #94A3B8;
+    --input: #94A3B8;
+    --ring: #4338CA;
+    --radius: 0.875rem;
+    --sidebar-background: #0F172A;
+    --sidebar-foreground: #E2E8F0;
+    --sidebar-primary: #818CF8;
     --sidebar-primary-foreground: #FFFFFF;
-    --sidebar-accent: #E0F2FE;
-    --sidebar-accent-foreground: #0369A1;
-    --sidebar-border: #E0F2FE;
-    --sidebar-ring: #0EA5E9;
+    --sidebar-accent: rgba(255, 255, 255, 0.1);
+    --sidebar-accent-foreground: #FFFFFF;
+    --sidebar-border: rgba(255, 255, 255, 0.28);
+    --sidebar-ring: #818CF8;
   }
 
   .dark {
@@ -103,6 +103,19 @@
     @apply border-border;
   }
 
+  table {
+    border-collapse: collapse;
+    border-width: 1px;
+    border-style: solid;
+  }
+
+  th,
+  td {
+    border-width: 1px;
+    border-style: solid;
+    padding: 0.75rem 1rem;
+  }
+
   html,
   body,
   #root {
@@ -116,6 +129,10 @@
     font-feature-settings: "rlig" 1, "calt" 1;
     font-size: 14px;
     line-height: 1.6;
+    background-image:
+      radial-gradient(900px 420px at 0% -8%, rgba(67, 56, 202, 0.1), transparent 60%),
+      radial-gradient(720px 380px at 100% 0%, rgba(14, 165, 233, 0.1), transparent 55%);
+    background-attachment: fixed;
   }
 
   a,
@@ -233,7 +250,8 @@
 
 @layer utilities {
   .app-shell {
-    @apply flex h-screen overflow-hidden bg-background text-foreground font-sans;
+    @apply flex h-screen overflow-hidden text-foreground font-sans;
+    background: transparent;
   }
 
   .app-main {
@@ -250,9 +268,9 @@
   }
 
   .panel-card {
-    @apply border border-border bg-card text-card-foreground shadow-sm;
+    @apply border-2 border-border bg-card text-card-foreground;
     border-radius: var(--radius);
-    padding: 0;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
   }
   
   .card-header { @apply p-5 pb-2; }
@@ -266,10 +284,12 @@
   }
 
   .app-sidebar {
-    background-color: var(--sidebar-background);
+    background:
+      linear-gradient(180deg, rgba(129, 140, 248, 0.16), transparent 180px),
+      var(--sidebar-background);
     color: var(--sidebar-foreground);
     border-right: 1px solid var(--sidebar-border);
-    width: 240px;
+    width: 272px;
   }
   
   .app-sidebar.collapsed {
@@ -277,13 +297,13 @@
   }
 
   .soft-input {
-    @apply w-full border border-input bg-background px-4 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground;
-    border-radius: 8px;
+    @apply w-full border-2 border-input bg-background px-3.5 py-2.5 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-4 focus:ring-primary/10;
+    border-radius: 10px;
   }
   
   /* Badge Styles */
   .badge {
-    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-primary/10 text-primary border-0;
+    @apply inline-flex items-center rounded-full border border-primary/40 px-2.5 py-0.5 text-xs font-medium bg-primary/10 text-primary;
   }
   .badge-secondary {
     @apply bg-secondary text-secondary-foreground;
@@ -296,13 +316,29 @@
   }
 
   .primary-button {
-    @apply inline-flex items-center justify-center bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground;
-    border-radius: 8px;
+    @apply inline-flex items-center justify-center border-2 border-indigo-950 bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60;
+    border-radius: 10px;
   }
 
   .secondary-button {
-    @apply inline-flex items-center justify-center border border-border bg-card px-4 py-3 text-sm font-medium text-foreground;
-    border-radius: 8px;
+    @apply inline-flex items-center justify-center border-2 border-border bg-card px-3.5 py-2 text-sm font-medium text-foreground hover:bg-muted;
+    border-radius: 10px;
+  }
+
+  .auth-screen {
+    @apply grid min-h-screen lg:grid-cols-[minmax(0,1.05fr)_minmax(420px,0.95fr)];
+  }
+
+  .auth-brand {
+    @apply relative hidden overflow-hidden px-10 py-12 text-white lg:flex lg:flex-col lg:justify-between;
+    background:
+      radial-gradient(520px 280px at 15% 10%, rgba(255, 255, 255, 0.16), transparent 60%),
+      linear-gradient(160deg, #312e81 0%, #1e1b4b 48%, #0f172a 100%);
+    border-right: 1px solid #312e81;
+  }
+
+  .auth-panel {
+    @apply flex items-center justify-center px-4 py-8;
   }
 
   .section-label {

@@ -7,7 +7,7 @@ function MessageCard({ message }) {
   const isAssistant = message.role === 'assistant';
 
   return (
-    <div className={`w-full px-4 py-4 ${isAssistant ? 'border-b border-border/50 bg-muted/20' : 'bg-transparent'}`}>
+    <div className={`w-full px-5 py-5 ${isAssistant ? 'border-b border-border bg-muted/20' : 'bg-transparent'}`}>
       <div className="mx-auto max-w-4xl">
         <div className="flex items-start gap-3">
           <div className={`mt-1 rounded-lg border p-2 ${isAssistant ? 'border-primary/20 bg-primary/10 text-primary' : 'border-border bg-card text-foreground'}`}>
@@ -69,7 +69,7 @@ export function ProjectChatPanel({
   }, [messages, isStreaming]);
 
   return (
-    <section className="panel-card m-3 mt-0 flex min-h-0 flex-1 flex-col md:m-4 md:mt-0">
+    <section className="panel-card m-4 flex min-h-0 flex-1 flex-col md:m-6">
       <div className="min-h-0 flex-1 overflow-y-auto">
         {messages.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center px-6 text-center">
@@ -89,7 +89,7 @@ export function ProjectChatPanel({
         )}
       </div>
 
-      <div className="border-t border-border/70 bg-background p-3 md:p-4">
+      <div className="border-t border-border bg-background p-4 md:p-5">
         <InputBar
           onSendMessage={onSendMessage}
           isProcessing={isStreaming || disabled}

@@ -20,8 +20,9 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 EMAIL_PATTERN = r"^[^\s@]+@[^\s@]+\.[^\s@]+$"
-STUDENT_EMAIL_PATTERN = r"^[a-z0-9]+@mietjammu\.in$"
-FACULTY_ADMIN_EMAIL_PATTERN = r"^[a-z]+(?:\.[a-z]+)+@mietjammu\.in$"
+CAMPUS_EMAIL_PATTERN = r"^[a-z0-9]+(?:[._-][a-z0-9]+)*@mietjammu\.in$"
+STUDENT_EMAIL_PATTERN = CAMPUS_EMAIL_PATTERN
+FACULTY_ADMIN_EMAIL_PATTERN = CAMPUS_EMAIL_PATTERN
 
 
 class UserRole(str, Enum):
@@ -59,22 +60,9 @@ async def _ensure_user_role(users, user: dict) -> str:
     return normalized_role
 
 
-def _mode_allows_role(mode: LoginMode, role: str) -> bool:
-    if mode == LoginMode.STUDENT:
-        return role == UserRole.STUDENT.value
-    return role in {UserRole.FACULTY.value, UserRole.ADMIN.value}
-
-
-def _is_valid_mode_email(email: str, mode: LoginMode) -> bool:
-    if mode == LoginMode.STUDENT:
-        return bool(re.match(STUDENT_EMAIL_PATTERN, email))
-    return bool(re.match(FACULTY_ADMIN_EMAIL_PATTERN, email))
-
-
-def _mode_email_error(mode: LoginMode) -> str:
-    if mode == LoginMode.STUDENT:
-        return "Student email must follow format yourrollno@mietjammu.in."
-    return "Faculty/Admin email must follow format yourname.dept@mietjammu.in."
+def is_campus_email(email: str) -> bool:
+    """Accept any MIET address. Role is stored on the account, not inferred from the address."""
+    return bool(re.fullmatch(CAMPUS_EMAIL_PATTERN, email))
 
 
 def hash_password(password: str) -> str:
@@ -156,16 +144,10 @@ async def signup(request: SignupRequest):
     """Register a new user with MIET email."""
     email = request.email.strip().lower()
 
-    if request.mode != LoginMode.STUDENT:
-        raise HTTPException(
-            status_code=403,
-            detail="Faculty/Admin accounts are provisioned by system administrators.",
-        )
-
-    if not _is_valid_mode_email(email, LoginMode.STUDENT):
+    if not is_campus_email(email):
         raise HTTPException(
             status_code=400,
-            detail=_mode_email_error(LoginMode.STUDENT),
+            detail="Use a MIET email such as name@mietjammu.in. New accounts start as students.",
         )
 
     users = get_users_collection()
@@ -225,8 +207,11 @@ async def login(request: LoginRequest):
     """Authenticate user and return JWT token."""
     email = request.email.strip().lower()
 
-    if request.mode is not None and not _is_valid_mode_email(email, request.mode):
-        raise HTTPException(status_code=400, detail=_mode_email_error(request.mode))
+    if not is_campus_email(email):
+        raise HTTPException(
+            status_code=400,
+            detail="Use a MIET email such as name@mietjammu.in.",
+        )
 
     users = get_users_collection()
     user = await users.find_one({"email": email})
@@ -238,13 +223,6 @@ async def login(request: LoginRequest):
         )
 
     role = await _ensure_user_role(users, user)
-
-    if request.mode is not None and not _mode_allows_role(request.mode, role):
-        if request.mode == LoginMode.STUDENT:
-            detail = "This account is not allowed in Student mode."
-        else:
-            detail = "This account is not allowed in Faculty/Admin mode."
-        raise HTTPException(status_code=403, detail=detail)
 
     token = create_token(
         str(user["_id"]),

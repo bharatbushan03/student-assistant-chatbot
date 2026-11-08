@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 from datetime import datetime
 from typing import Optional
 
@@ -13,7 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from app.config.settings import get_settings
 from app.db.mongodb import get_notices_collection, get_student_academics_collection, get_users_collection
 from app.routes.academics import compose_student_dashboard, load_student_notices
-from app.routes.auth import hash_password
+from app.routes.auth import hash_password, is_campus_email
 from app.schemas.academics import NoticeSchema
 from app.schemas.admin import (
     AdminOverviewSchema,
@@ -30,8 +29,6 @@ from app.services.student_oversight import build_student_directory, filter_direc
 from app.utils.auth import require_roles
 
 router = APIRouter()
-
-FACULTY_ADMIN_EMAIL_PATTERN = r"^[a-z]+(?:\.[a-z]+)+@mietjammu\.in$"
 
 
 async def _directory_rows() -> list[dict]:
@@ -212,21 +209,38 @@ async def provision_staff_account(
     payload: ProvisionAccountRequestSchema,
     _: dict = Depends(require_roles("admin")),
 ):
-    """Create a faculty or admin account. Students continue to self-register."""
+    """Appoint faculty or admin access. An existing student keeps the same account."""
     email = payload.email.strip().lower()
-    if not re.match(FACULTY_ADMIN_EMAIL_PATTERN, email):
+    if not is_campus_email(email):
         raise HTTPException(
             status_code=400,
-            detail="Faculty/Admin email must follow format yourname.dept@mietjammu.in.",
+            detail="Use a MIET email such as name@mietjammu.in.",
         )
 
     users = get_users_collection()
     existing = await users.find_one({"email": email})
-    if existing:
-        raise HTTPException(status_code=400, detail="An account with this email already exists.")
-
     now = datetime.utcnow()
     name = payload.name.strip() if payload.name else None
+    if existing:
+        current_role = str(existing.get("role") or "student").strip().lower()
+        if current_role == payload.role:
+            raise HTTPException(status_code=400, detail=f"This account is already {payload.role}.")
+        updates = {
+            "role": payload.role,
+            "password": hash_password(payload.password),
+            "updated_at": now,
+        }
+        if name:
+            updates["name"] = name
+        await users.update_one({"_id": existing["_id"]}, {"$set": updates})
+        return ProvisionAccountResponseSchema(
+            id=str(existing["_id"]),
+            email=email,
+            role=payload.role,
+            name=name or existing.get("name"),
+            created_at=existing.get("created_at") or now,
+        )
+
     result = await users.insert_one(
         {
             "email": email,

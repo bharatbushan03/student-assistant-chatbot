@@ -77,7 +77,7 @@ function SettingRow({
       className={`flex w-full items-center justify-between gap-3 rounded-2xl border px-3 py-2.5 text-left transition-all duration-300 ${
         destructive
           ? 'border-red-500/25 bg-red-500/8 hover:bg-red-500/12'
-          : 'border-border/80 bg-card/70 hover:bg-muted/60'
+          : 'border-border bg-card/70 hover:bg-muted/60'
       }`}
     >
       <div className="flex min-w-0 items-center gap-3">
@@ -109,9 +109,9 @@ function ContentCard({ item, type }) {
       href={item.url}
       target="_blank"
       rel="noreferrer"
-      className="group min-w-[210px] overflow-hidden rounded-2xl border border-border/80 bg-card/65 transition duration-200 hover:-translate-y-0.5 hover:bg-card"
+      className="group min-w-[210px] overflow-hidden rounded-2xl border border-border bg-card/65 transition duration-200 hover:-translate-y-0.5 hover:bg-card"
     >
-      <div className="relative h-28 overflow-hidden border-b border-border/60 bg-muted/40">
+      <div className="relative h-28 overflow-hidden border-b border-border bg-muted/40">
         {type === 'media' && isImage ? (
           <img src={item.url} alt="media" className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]" />
         ) : (
@@ -146,7 +146,7 @@ function MemberRow({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <div className="relative flex items-center justify-between gap-2 rounded-2xl border border-border/80 bg-card/70 px-3 py-2.5 transition-colors hover:bg-muted/60">
+    <div className="relative flex items-center justify-between gap-2 rounded-2xl border border-border bg-card/70 px-3 py-2.5 transition-colors hover:bg-muted/60">
       <div className="flex min-w-0 items-center gap-3">
         {member.avatar_url ? (
           <img
@@ -181,14 +181,14 @@ function MemberRow({
         <button
           type="button"
           onClick={() => setIsMenuOpen((current) => !current)}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border/70 bg-background/60 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border bg-background/60 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           aria-label="Member actions"
         >
           <MoreHorizontal size={14} />
         </button>
 
         {isMenuOpen ? (
-          <div className="absolute right-0 top-9 z-20 w-44 rounded-xl border border-border/80 bg-popover/95 p-1.5 shadow-lg backdrop-blur">
+          <div className="absolute right-0 top-9 z-20 w-44 rounded-xl border border-border bg-popover/95 p-1.5 shadow-lg backdrop-blur">
             <button
               type="button"
               onClick={() => {
@@ -374,7 +374,7 @@ export function GroupDetailsScreen({
     <div className="fixed inset-0 z-[80] animate-fade-in bg-black/65 backdrop-blur-sm">
       <div className="h-full w-full md:p-6">
         <div className="mx-auto flex h-full w-full max-w-5xl flex-col overflow-hidden border border-border bg-background shadow-[0_18px_50px_rgba(2,6,23,0.28)] md:rounded-3xl">
-          <div className="sticky top-0 z-30 border-b border-border/70 bg-background/92 px-4 py-3 backdrop-blur-xl">
+          <div className="sticky top-0 z-30 border-b border-border bg-background/92 px-4 py-3 backdrop-blur-xl">
             <div className="flex items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-3">
                 <button
@@ -422,7 +422,7 @@ export function GroupDetailsScreen({
           </div>
 
           <div className="flex-1 space-y-6 overflow-y-auto bg-background px-4 py-4 md:px-6 md:py-5">
-            <section className="rounded-2xl border border-border/80 bg-card/80 p-3 shadow-sm">
+            <section className="rounded-2xl border border-border bg-card/80 p-3 shadow-sm">
               <SectionTitle title="Quick Actions" subtitle="Audio, video, add, and search with one tap." />
               <div className="flex flex-wrap gap-2">
                 <DetailActionButton icon={Phone} label="Audio" onClick={onAudioCall} />
@@ -441,7 +441,7 @@ export function GroupDetailsScreen({
               <SectionTitle title="About Group" subtitle="Only admins can edit group description." />
 
               {!isEditingDescription ? (
-                <div className="rounded-2xl border border-border/80 bg-card/70 px-4 py-3">
+                <div className="rounded-2xl border border-border bg-card/70 px-4 py-3">
                   <p className="text-sm text-foreground">
                     {group.description || 'No group description available.'}
                   </p>
@@ -457,7 +457,7 @@ export function GroupDetailsScreen({
                   ) : null}
                 </div>
               ) : (
-                <div className="space-y-3 rounded-2xl border border-border/80 bg-card/70 px-4 py-3">
+                <div className="space-y-3 rounded-2xl border border-border bg-card/70 px-4 py-3">
                   <textarea
                     value={descriptionDraft}
                     onChange={(event) => setDescriptionDraft(event.target.value)}

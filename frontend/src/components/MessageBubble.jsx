@@ -15,8 +15,8 @@ export function MessageBubble({ message }) {
   };
 
   return (
-    <div className={`group w-full px-4 py-4 animate-fade-in ${isAI ? 'bg-muted/35' : ''}`}>
-      <div className="mx-auto flex max-w-4xl gap-4">
+    <div className="group w-full px-3 py-1 animate-fade-in">
+      <div className={`mx-auto flex max-w-3xl gap-3 ${isAI ? '' : 'flex-row-reverse'}`}>
         <div className="mt-0.5">
           <div
             className={`flex h-9 w-9 items-center justify-center rounded-full border ${
@@ -29,13 +29,13 @@ export function MessageBubble({ message }) {
           </div>
         </div>
 
-        <div className="min-w-0 flex-1">
-          <div className="mb-2 flex items-center gap-2">
+        <div className={`min-w-0 ${isAI ? 'flex-1' : 'max-w-[75%]'}`}>
+          <div className={`mb-2 flex items-center gap-2 ${isAI ? '' : 'justify-end'}`}>
             <span className="text-sm font-semibold text-foreground">{isAI ? 'Miety AI' : 'You'}</span>
             <span className="text-xs text-muted-foreground">{formatTime(message.timestamp)}</span>
           </div>
 
-          <div className="prose prose-sm max-w-none text-foreground leading-relaxed prose-p:my-1 prose-headings:mb-2 prose-headings:mt-3 prose-headings:font-semibold prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-pre:border prose-pre:border-border prose-pre:bg-card prose-code:rounded prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-a:text-primary prose-a:no-underline hover:prose-a:underline">
+          <div className={`prose prose-sm max-w-none leading-relaxed prose-p:my-1 prose-headings:mb-2 prose-headings:mt-3 prose-headings:font-semibold prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-pre:border prose-pre:border-border prose-pre:bg-card prose-code:rounded prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-a:text-primary prose-a:no-underline hover:prose-a:underline ${isAI ? 'rounded-2xl border border-border bg-card px-4 py-3 text-foreground' : 'rounded-2xl border border-indigo-950 bg-primary px-4 py-3 text-primary-foreground'}`}>
             {isAI ? (
               <ReactMarkdown
                 components={{
@@ -69,7 +69,7 @@ export function MessageBubble({ message }) {
                 {message.content}
               </ReactMarkdown>
             ) : (
-              <div className="whitespace-pre-wrap text-sm leading-6">{message.content}</div>
+              <div className={`whitespace-pre-wrap text-sm leading-6 ${isAI ? '' : 'text-primary-foreground'}`}>{message.content}</div>
             )}
           </div>
 

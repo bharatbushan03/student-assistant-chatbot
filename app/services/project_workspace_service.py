@@ -29,7 +29,7 @@ from app.models.project_workspace import (
     ProjectMessageModel,
     ProjectModel,
 )
-from app.services.embeddings import get_embedding_model
+from app.services.embeddings import embed_passage, get_embedding_model
 
 logger = logging.getLogger(__name__)
 
@@ -642,7 +642,7 @@ class ProjectWorkspaceService:
 
         embedding: List[float] = []
         if extracted_text.strip():
-            vector = await asyncio.to_thread(get_embedding_model().encode, extracted_text[:8000])
+            vector = await asyncio.to_thread(embed_passage, extracted_text[:8000])
             embedding = vector.tolist() if hasattr(vector, "tolist") else list(vector)
 
         collections = ProjectWorkspaceService._collections()

@@ -27,6 +27,41 @@ def test_content_skips_reasoning_parts():
     assert LLMClient._content_to_text(content) == "Visible answer"
 
 
+def test_query_embedding_uses_nvidia_api(monkeypatch):
+    from app.config.settings import get_settings
+    from app.services.embeddings import NvidiaEmbeddingClient, get_embedding_model
+
+    created = {}
+
+    class Row:
+        def __init__(self, index, embedding):
+            self.index = index
+            self.embedding = embedding
+
+    class FakeEmbeddings:
+        def create(self, **kwargs):
+            created.update(kwargs)
+            return type("Response", (), {"data": [Row(0, [0.1, 0.2])]})()
+
+    class FakeOpenAI:
+        def __init__(self, **kwargs):
+            created["init"] = kwargs
+            self.embeddings = FakeEmbeddings()
+
+    monkeypatch.setattr("app.services.embeddings.OpenAI", FakeOpenAI)
+    get_settings.cache_clear()
+    get_embedding_model.cache_clear()
+
+    result = NvidiaEmbeddingClient().encode("What is the fee?")
+
+    assert result.tolist() == [0.1, 0.2]
+    assert created["model"] == "nvidia/nv-embedqa-e5-v5"
+    assert created["extra_body"]["input_type"] == "query"
+    assert "integrate.api.nvidia.com" in created["init"]["base_url"]
+    get_embedding_model.cache_clear()
+    get_settings.cache_clear()
+
+
 def test_directory_marks_risk_and_missing_records():
     users = [
         {
