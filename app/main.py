@@ -148,8 +148,20 @@ async def handle_mongodb_errors(request: Request, exc: PyMongoError):
     )
 
 # ── CORS ──────────────────────────────────────────────────────────────
+def _cors_origin_regex(settings) -> str | None:
+    """Match Netlify and optional Vercel preview hostnames when origins are pinned."""
+    patterns = []
+    if settings.cors_allow_netlify_previews:
+        patterns.append(r"https://[a-zA-Z0-9-]+\.netlify\.app")
+    if settings.cors_allow_vercel_previews:
+        patterns.append(r"https://([a-zA-Z0-9-]+\.)*vercel\.app")
+    if not patterns:
+        return None
+    return "(?:" + "|".join(patterns) + ")"
+
+
 def _cors_middleware_kwargs() -> dict:
-    """Allow the Vercel frontend, local Vite, and optional preview deploys."""
+    """Allow the Netlify frontend, local Vite, and optional preview deploys."""
     from app.config.settings import get_settings
 
     settings = get_settings()
@@ -173,8 +185,9 @@ def _cors_middleware_kwargs() -> dict:
         "allow_methods": ["*"],
         "allow_headers": ["*"],
     }
-    if settings.cors_allow_vercel_previews:
-        kwargs["allow_origin_regex"] = r"https://([a-zA-Z0-9-]+\.)*vercel\.app"
+    origin_regex = _cors_origin_regex(settings)
+    if origin_regex:
+        kwargs["allow_origin_regex"] = origin_regex
     return kwargs
 
 
@@ -188,7 +201,7 @@ fastapi_app.add_middleware(CORSMiddleware, **_cors_middleware_kwargs())
 # ── Health check (before catch-all) ──────────────────────────────────
 @fastapi_app.get("/health", include_in_schema=False)
 async def health_check():
-    """Simple health check for Render / uptime monitors."""
+    """Simple health check for uptime monitors."""
     from app.config.settings import get_settings
     settings = get_settings()
     return {

@@ -1,4 +1,4 @@
-# API image for Cloudflare Containers. The React app is served by the Worker.
+# API image for Cloudflare Containers. Netlify serves the React app.
 FROM python:3.11-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \

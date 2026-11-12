@@ -7,7 +7,7 @@ from pathlib import Path
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# Resolve project root once – works in Docker, local dev, and Render
+# Resolve project root once – works in Docker, local dev, and the Cloudflare container.
 PROJECT_ROOT = Path(os.environ.get("PROJECT_ROOT", Path(__file__).resolve().parents[2]))
 
 
@@ -50,9 +50,10 @@ class Settings(BaseSettings):
     # Server
     port: int = Field(default=10000, alias="PORT")
     # Comma-separated browser origins, or * for any origin.
-    # Example: https://miety-ai.vercel.app
+    # Example: https://miety-ai.netlify.app
     cors_origins: str = Field(default="*", alias="CORS_ORIGINS")
-    cors_allow_vercel_previews: bool = Field(default=True, alias="CORS_ALLOW_VERCEL_PREVIEWS")
+    cors_allow_netlify_previews: bool = Field(default=True, alias="CORS_ALLOW_NETLIFY_PREVIEWS")
+    cors_allow_vercel_previews: bool = Field(default=False, alias="CORS_ALLOW_VERCEL_PREVIEWS")
 
     # MongoDB
     mongodb_uri: str = Field(default="mongodb://localhost:27017", alias="MONGODB_URI")

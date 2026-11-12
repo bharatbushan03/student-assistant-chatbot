@@ -71,11 +71,15 @@ The API is at [http://localhost:10000](http://localhost:10000). API docs are at 
 
 Sign in with the matching mode on the login page. Faculty and admin accounts cannot self-register.
 
-## Deploy on Cloudflare
+## Deploy
 
-The site and the API share one hostname. A Worker serves the React build and forwards API and Socket.IO traffic to one [Cloudflare Container](https://developers.cloudflare.com/containers/) running this repo’s `Dockerfile`. Workers cannot run the Python stack, so the container is required.
+The React app is a static site on [Netlify](https://www.netlify.com/). The API is a Cloudflare Worker that forwards every request, including Socket.IO, to one [container](https://developers.cloudflare.com/containers/) built from this repo’s `Dockerfile`.
 
-You need Docker, a Cloudflare account with Containers enabled, and Wrangler 4.136 or newer. Leave `VITE_API_URL` empty so the browser calls the same host.
+Netlify’s free plan can host the frontend. The API cannot run on the Workers Free plan. A Worker has a [10 ms CPU limit](https://developers.cloudflare.com/workers/platform/limits/) and cannot run FastAPI, MongoDB, Pinecone, or Socket.IO. [Containers are not on the free plan](https://developers.cloudflare.com/containers/platform/pricing/); they need Workers Paid ($5/month), which includes a monthly amount of container memory, CPU, and disk. This API uses the `standard-1` instance (4 GiB) so the embedding libraries fit, then sleeps after 15 minutes without requests.
+
+### Backend on Cloudflare
+
+You need Docker, a Cloudflare account on Workers Paid, and Wrangler 4.136 or newer.
 
 ```powershell
 npm install
@@ -88,11 +92,19 @@ npx wrangler secret put BOOTSTRAP_ADMIN_PASSWORD
 npm run deploy
 ```
 
-`npm run deploy` builds `frontend/dist` and runs `wrangler deploy`. The first image build is slow. After deploy, wait until `npx wrangler containers list` shows the instance before calling `/health`.
+`npm run deploy` publishes the API Worker only. The first image build is slow. After deploy, Wrangler prints a `*.workers.dev` URL. Wait until `npx wrangler containers list` shows the instance, then open `https://<worker>/health`.
 
-The container size is `standard-1` (4 GiB memory) so the embedding libraries fit. It sleeps after 15 minutes without requests, and the next request starts it again. MongoDB Atlas must accept connections from Cloudflare. Allowing `0.0.0.0/0` is the practical setting unless you restrict egress another way.
+MongoDB Atlas must accept connections from Cloudflare. Allowing `0.0.0.0/0` is the practical setting unless you restrict egress another way.
 
 `.env` is only for local `uvicorn`. Cloudflare reads Worker secrets, which `cloudflare/src/index.js` passes into the container when it starts. Local `wrangler dev` reads `.dev.vars`, not `.env`.
+
+### Frontend on Netlify
+
+1. Import this repository in Netlify. Leave the base directory empty. `netlify.toml` builds `frontend/` and publishes `frontend/dist`.
+2. In Site configuration → Environment variables, set `VITE_API_URL` to the Worker URL with no trailing slash, for example `https://miety-ai.<account>.workers.dev`.
+3. Deploy the site. Vite bakes `VITE_API_URL` into the bundle, so change that variable and then trigger a new deploy.
+
+Production, branch, and deploy-preview URLs on `*.netlify.app` are allowed when `CORS_ORIGINS` is `*`. To lock the API to one site, set the Worker variable `CORS_ORIGINS` to that exact origin, such as `https://your-site.netlify.app`, and keep `CORS_ALLOW_NETLIFY_PREVIEWS` as `true`. Local Vite keeps proxying to port 10000 when `VITE_API_URL` is empty.
 
 ## Tests
 
@@ -106,9 +118,10 @@ npm test
 
 ```
 app/                     FastAPI routes, RAG, auth, groups, and dashboards
-cloudflare/src/index.js  Worker: static site plus proxy to the API container
-frontend/                React app
+cloudflare/src/index.js  Worker: proxy to the API container
+frontend/                React app, deployed on Netlify
 ingestion/               Scrape, chunk, and embed into Pinecone
+netlify.toml             Netlify build and SPA redirect
 wrangler.jsonc           Worker and container settings
 Dockerfile               API image
 docker-compose.yml       Local API, frontend, and MongoDB

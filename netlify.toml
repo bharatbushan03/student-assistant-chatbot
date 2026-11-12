@@ -1,0 +1,17 @@
+# Netlify serves the React app only. API calls go to the Cloudflare Worker
+# through VITE_API_URL, which Vite reads at build time.
+# In the Netlify UI, leave the base directory empty. This file sets it.
+
+[build]
+  base = "frontend"
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# Existing files are served first. This catches client-side routes.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

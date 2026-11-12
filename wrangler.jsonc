@@ -6,25 +6,6 @@
   "observability": {
     "enabled": true
   },
-  "assets": {
-    "directory": "./frontend/dist",
-    "not_found_handling": "single-page-application",
-    "binding": "ASSETS",
-    "run_worker_first": [
-      "/auth",
-      "/auth/*",
-      "/chat",
-      "/chat/*",
-      "/api/*",
-      "/socket.io",
-      "/socket.io/*",
-      "/health",
-      "/docs",
-      "/docs/*",
-      "/redoc",
-      "/openapi.json"
-    ]
-  },
   "containers": [
     {
       "class_name": "ApiContainer",
@@ -58,6 +39,7 @@
     "PINECONE_CLOUD": "aws",
     "PINECONE_REGION": "us-east-1",
     "MONGODB_DATABASE": "miety_ai",
-    "CORS_ORIGINS": "*"
+    "CORS_ORIGINS": "*",
+    "CORS_ALLOW_NETLIFY_PREVIEWS": "true"
   }
 }

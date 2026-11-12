@@ -309,7 +309,7 @@ export default function ChatApp() {
             {
               id: generateId(),
               role: 'ai',
-              content: '**Error:** Could not reach the API. For local dev, run the backend on port 10000. On Vercel, set VITE_API_URL to the Render URL and redeploy.',
+              content: '**Error:** Could not reach the API. For local dev, run the backend on port 10000. On Netlify, set VITE_API_URL to the Cloudflare Worker URL and redeploy.',
               timestamp: Date.now(),
             },
           ],

@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { getApiOrigin } from './apiOrigin';
 
-// Relative during local dev (Vite proxy). Absolute when VITE_API_URL points at Render.
+// Relative during local dev (Vite proxy). Absolute when VITE_API_URL points at Cloudflare.
 const api = axios.create({
   baseURL: getApiOrigin() || undefined,
 });
