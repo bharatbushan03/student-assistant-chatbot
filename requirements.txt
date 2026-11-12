@@ -17,13 +17,10 @@ requests==2.33.1
 
 # ── Vector DB / embeddings ──
 pinecone==8.1.1
-sentence-transformers==5.3.0
 
 # ── Ingestion / document parsing ──
 beautifulsoup4==4.14.3
 pypdf==6.9.2
-docx2txt==0.9
-pdfminer.six==20260107
 
 # ── Environment / auth ──
 python-dotenv==1.2.2

@@ -1,55 +1,9 @@
-version: '3.8'
-
 services:
-  # MongoDB
-  mongo:
-    image: mongo:7
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongo-data:/data/db
-    networks:
-      - miety-network
-
-  # FastAPI Chat Backend (port 10000)
   chat-backend:
     build:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "10000:10000"
-    environment:
-      - PORT=10000
-      - MONGODB_URI=${MONGODB_URI:-mongodb://mongo:27017/miety_ai}
-      - MONGODB_DATABASE=${MONGODB_DATABASE:-miety_ai}
-      - NVIDIA_API_KEY=${NVIDIA_API_KEY}
-      - NVIDIA_MODEL=${NVIDIA_MODEL:-nvidia/nemotron-3-super-120b-a12b}
-      - NVIDIA_BASE_URL=${NVIDIA_BASE_URL:-https://integrate.api.nvidia.com/v1}
-      - PINECONE_API_KEY=${PINECONE_API_KEY}
-      - PINECONE_INDEX_NAME=${PINECONE_INDEX_NAME:-miet-jammu-index}
-      - PINECONE_CLOUD=${PINECONE_CLOUD:-aws}
-      - PINECONE_REGION=${PINECONE_REGION:-us-east-1}
-      - JWT_SECRET=${JWT_SECRET}
-    depends_on:
-      - mongo
-    networks:
-      - miety-network
-
-  # React Frontend with Nginx (port 80)
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    ports:
-      - "3000:80"
-    depends_on:
-      - chat-backend
-    networks:
-      - miety-network
-
-networks:
-  miety-network:
-    driver: bridge
-
-volumes:
-  mongo-data:
+      - "10000:8080"
+    env_file:
+      - .env

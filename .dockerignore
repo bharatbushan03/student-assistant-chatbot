@@ -17,7 +17,7 @@ ENV/
 *.egg-info/
 requirements-dev.txt
 
-# Node / frontend (built and hosted on Vercel)
+# Node / frontend (built and hosted on Netlify)
 node_modules
 npm-debug.log
 yarn-error.log

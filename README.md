@@ -16,7 +16,7 @@ Answers come from a Pinecone knowledge base plus NVIDIA Nemotron (`nvidia/nemotr
 
 - Python 3.11
 - Node.js 20
-- MongoDB, local or [Atlas](https://www.mongodb.com/atlas)
+- MongoDB Atlas. The API rejects a local MongoDB URI.
 - `NVIDIA_API_KEY` from [build.nvidia.com/settings](https://build.nvidia.com/settings)
 - `PINECONE_API_KEY` from [app.pinecone.io](https://app.pinecone.io/)
 
@@ -73,38 +73,41 @@ Sign in with the matching mode on the login page. Faculty and admin accounts can
 
 ## Deploy
 
-The React app is a static site on [Netlify](https://www.netlify.com/). The API is a Cloudflare Worker that forwards every request, including Socket.IO, to one [container](https://developers.cloudflare.com/containers/) built from this repo’s `Dockerfile`.
+The React app is a static site on [Netlify](https://www.netlify.com/). The API is one container on [Northflank](https://northflank.com/), built from this repo’s `Dockerfile`. It listens on port 8080. MongoDB stays on Atlas, and embeddings go to the NVIDIA API.
 
-Netlify’s free plan can host the frontend. The API cannot run on the Workers Free plan. A Worker has a [10 ms CPU limit](https://developers.cloudflare.com/workers/platform/limits/) and cannot run FastAPI, MongoDB, Pinecone, or Socket.IO. [Containers are not on the free plan](https://developers.cloudflare.com/containers/platform/pricing/); they need Workers Paid ($5/month), which includes a monthly amount of container memory, CPU, and disk. This API uses the `standard-1` instance (4 GiB) so the embedding libraries fit, then sleeps after 15 minutes without requests.
+Use Northflank’s free Sandbox and the `nf-compute-50` plan: 0.5 vCPU and 1 GB of RAM, about $12 of the $20 monthly allowance. That plan does not ask for a card. A second service or a larger plan can push the account past the allowance.
 
-### Backend on Cloudflare
+### Backend on Northflank
 
-You need Docker, a Cloudflare account on Workers Paid, and Wrangler 4.136 or newer.
+1. Push this repository to GitHub.
+2. In Northflank, create a project, then a combined service. Choose this repo and the branch you want to run.
+3. Build type: Dockerfile. Dockerfile path: `/Dockerfile`. Build context: `/`.
+4. Northflank detects port 8080. Make that port public HTTP. The same port carries the API and Socket.IO.
+5. Add a health check: HTTP `GET /health` on port 8080.
+6. Set runtime variables from your local `.env`. Do not commit that file.
 
-```powershell
-npm install
-Copy-Item .dev.vars.example .dev.vars
-npx wrangler secret put NVIDIA_API_KEY
-npx wrangler secret put PINECONE_API_KEY
-npx wrangler secret put MONGODB_URI
-npx wrangler secret put JWT_SECRET
-npx wrangler secret put BOOTSTRAP_ADMIN_PASSWORD
-npm run deploy
-```
+| Variable | Required |
+| --- | --- |
+| `NVIDIA_API_KEY` | Yes |
+| `PINECONE_API_KEY` | Yes |
+| `MONGODB_URI` | Yes. Atlas `mongodb+srv://` string |
+| `MONGODB_DATABASE` | `miety_ai` |
+| `JWT_SECRET` | Yes |
+| `BOOTSTRAP_ADMIN_EMAIL` | Optional first admin |
+| `BOOTSTRAP_ADMIN_PASSWORD` | Optional first admin |
+| `CORS_ORIGINS` | `*` until you pin the Netlify URL |
 
-`npm run deploy` publishes the API Worker only. The first image build is slow. After deploy, Wrangler prints a `*.workers.dev` URL. Wait until `npx wrangler containers list` shows the instance, then open `https://<worker>/health`.
+7. Create the service and wait until the deployment is running. Open `https://<service>.northflank.app/health`.
 
-MongoDB Atlas must accept connections from Cloudflare. Allowing `0.0.0.0/0` is the practical setting unless you restrict egress another way.
-
-`.env` is only for local `uvicorn`. Cloudflare reads Worker secrets, which `cloudflare/src/index.js` passes into the container when it starts. Local `wrangler dev` reads `.dev.vars`, not `.env`.
+In Atlas, allow connections from anywhere (`0.0.0.0/0`) unless you have another way to allow Northflank’s outbound addresses.
 
 ### Frontend on Netlify
 
 1. Import this repository in Netlify. Leave the base directory empty. `netlify.toml` builds `frontend/` and publishes `frontend/dist`.
-2. In Site configuration → Environment variables, set `VITE_API_URL` to the Worker URL with no trailing slash, for example `https://miety-ai.<account>.workers.dev`.
+2. In Site configuration → Environment variables, set `VITE_API_URL` to the public HTTPS address Northflank shows for port 8080, with no trailing slash.
 3. Deploy the site. Vite bakes `VITE_API_URL` into the bundle, so change that variable and then trigger a new deploy.
 
-Production, branch, and deploy-preview URLs on `*.netlify.app` are allowed when `CORS_ORIGINS` is `*`. To lock the API to one site, set the Worker variable `CORS_ORIGINS` to that exact origin, such as `https://your-site.netlify.app`, and keep `CORS_ALLOW_NETLIFY_PREVIEWS` as `true`. Local Vite keeps proxying to port 10000 when `VITE_API_URL` is empty.
+`CORS_ORIGINS=*` allows the Netlify site. To lock the API to one site, set `CORS_ORIGINS` to that exact origin, such as `https://your-site.netlify.app`, and keep `CORS_ALLOW_NETLIFY_PREVIEWS` as `true`. Local Vite keeps proxying to port 10000 when `VITE_API_URL` is empty.
 
 ## Tests
 
@@ -118,13 +121,11 @@ npm test
 
 ```
 app/                     FastAPI routes, RAG, auth, groups, and dashboards
-cloudflare/src/index.js  Worker: proxy to the API container
 frontend/                React app, deployed on Netlify
 ingestion/               Scrape, chunk, and embed into Pinecone
 netlify.toml             Netlify build and SPA redirect
-wrangler.jsonc           Worker and container settings
-Dockerfile               API image
-docker-compose.yml       Local API, frontend, and MongoDB
+Dockerfile               API image for Northflank
+docker-compose.yml       Local API container, using the Atlas URI from .env
 ```
 
 Interactive route docs are served at `/docs` when the API is running.

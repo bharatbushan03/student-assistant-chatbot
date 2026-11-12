@@ -1,10 +1,8 @@
-# API image for Cloudflare Containers. Netlify serves the React app.
+# API image. Netlify serves the React app.
 FROM python:3.11-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    HF_HOME=/tmp/huggingface \
-    SENTENCE_TRANSFORMERS_HOME=/tmp/sentence-transformers
+    PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
@@ -22,5 +20,6 @@ COPY ingestion/ ./ingestion/
 
 EXPOSE 8080
 
-# Cloudflare Containers set PORT=8080. Local Docker falls back to 10000.
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-10000}"]
+# Northflank routes public HTTP, including Socket.IO, to this port.
+# Local Docker maps host 10000 to container 8080.
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]

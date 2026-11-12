@@ -12,6 +12,22 @@ logger = logging.getLogger(__name__)
 _client: Optional[AsyncIOMotorClient] = None
 
 
+def require_atlas_uri(uri: str) -> str:
+    """Accept only a MongoDB Atlas SRV connection string."""
+    value = (uri or "").strip()
+    lowered = value.lower()
+    if (
+        not lowered.startswith("mongodb+srv://")
+        or "localhost" in lowered
+        or "127.0.0.1" in lowered
+    ):
+        raise RuntimeError(
+            "MONGODB_URI must be a MongoDB Atlas connection string starting with mongodb+srv://. "
+            "Local MongoDB is not used."
+        )
+    return value
+
+
 def get_client() -> AsyncIOMotorClient:
     """Get or create the MongoDB async client with connection pooling.
 
@@ -26,7 +42,7 @@ def get_client() -> AsyncIOMotorClient:
     if _client is None:
         settings = get_settings()
         _client = AsyncIOMotorClient(
-            settings.mongodb_uri,
+            require_atlas_uri(settings.mongodb_uri),
             maxPoolSize=100,
             minPoolSize=10,
             serverSelectionTimeoutMS=5000,

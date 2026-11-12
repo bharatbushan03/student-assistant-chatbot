@@ -7,7 +7,7 @@ from pathlib import Path
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# Resolve project root once – works in Docker, local dev, and the Cloudflare container.
+# Resolve project root once – works in Docker, local dev, and Northflank.
 PROJECT_ROOT = Path(os.environ.get("PROJECT_ROOT", Path(__file__).resolve().parents[2]))
 
 
@@ -55,8 +55,8 @@ class Settings(BaseSettings):
     cors_allow_netlify_previews: bool = Field(default=True, alias="CORS_ALLOW_NETLIFY_PREVIEWS")
     cors_allow_vercel_previews: bool = Field(default=False, alias="CORS_ALLOW_VERCEL_PREVIEWS")
 
-    # MongoDB
-    mongodb_uri: str = Field(default="mongodb://localhost:27017", alias="MONGODB_URI")
+    # MongoDB Atlas. Local MongoDB is not used.
+    mongodb_uri: str = Field(default="", alias="MONGODB_URI")
     mongodb_database: str = Field(default="miety_ai", alias="MONGODB_DATABASE")
 
     # Project workspace
